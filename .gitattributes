@@ -1,0 +1,5 @@
+# Archivos de Android que no deben ser modificados por herramientas automáticas
+android/app/build.gradle                          linguist-generated=false
+android/app/src/main/res/mipmap-*/ic_launcher*   binary
+android/app/src/main/res/values/colors.xml        linguist-generated=false
+android/app/google-services.json                  linguist-generated=false

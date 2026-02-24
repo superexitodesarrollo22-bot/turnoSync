@@ -1,0 +1,42 @@
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX PERMANENTE: Elimina recursos duplicados generados por Expo/Metro
+// No eliminar este bloque — es necesario para builds locales con Android Studio
+// ─────────────────────────────────────────────────────────────────────────────
+tasks.whenTaskAdded { task ->
+    if (task.name.contains("merge") && task.name.contains("Resources")) {
+        task.doFirst {
+            def drawablesDir = new File(projectDir, "src/main/res/")
+            drawablesDir.eachDir { dir ->
+                if (dir.name.startsWith("drawable-") || dir.name.startsWith("mipmap-") || dir.name == "raw") {
+                    def filesByName = [:]
+                    dir.eachFile { file ->
+                        // 1. Eliminar duplicados de Metro (node_modules, assets_)
+                        if (file.name.contains("node_modules") || file.name.contains("assets_")) {
+                            println "🗑️  Eliminando recurso duplicado (Metro): ${file.name}"
+                            file.delete()
+                            return
+                        }
+                        
+                        // 2. Eliminar duplicados por extensión (logo.png vs logo.webp)
+                        def baseName = file.name.lastIndexOf('.').with { it != -1 ? file.name.substring(0, it) : file.name }
+                        if (filesByName.containsKey(baseName)) {
+                            def existingFile = filesByName[baseName]
+                            // Priorizar PNG sobre WEBP si hay conflicto
+                            if (file.name.endsWith(".webp") && existingFile.name.endsWith(".png")) {
+                                println "🗑️  Eliminando conflictivo WEBP: ${file.name} (existe PNG)"
+                                file.delete()
+                            } else if (file.name.endsWith(".png") && existingFile.name.endsWith(".webp")) {
+                                println "🗑️  Eliminando conflictivo WEBP: ${existingFile.name} (existe PNG)"
+                                existingFile.delete()
+                                filesByName[baseName] = file
+                            }
+                        } else {
+                            filesByName[baseName] = file
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

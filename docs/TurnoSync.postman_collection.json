@@ -1,0 +1,199 @@
+{
+    "info": {
+        "name": "TurnoSync API",
+        "description": "Supabase Edge Functions — TurnoSync",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "SUPABASE_URL",
+            "value": "https://YOUR_PROJECT.supabase.co"
+        },
+        {
+            "key": "ANON_KEY",
+            "value": "YOUR_ANON_KEY"
+        },
+        {
+            "key": "JWT_TOKEN",
+            "value": "YOUR_USER_JWT"
+        },
+        {
+            "key": "BUSINESS_ID",
+            "value": "b0000000-0000-0000-0000-000000000001"
+        },
+        {
+            "key": "SERVICE_ID",
+            "value": ""
+        },
+        {
+            "key": "APPOINTMENT_ID",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "create_appointment — valid",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{JWT_TOKEN}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{SUPABASE_URL}}/functions/v1/create_appointment",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"business_id\": \"{{BUSINESS_ID}}\",\n  \"service_id\": \"{{SERVICE_ID}}\",\n  \"requested_start_at\": \"2026-03-10T14:00:00.000Z\"\n}"
+                }
+            }
+        },
+        {
+            "name": "create_appointment — CONFLICT",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{JWT_TOKEN}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{SUPABASE_URL}}/functions/v1/create_appointment",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"business_id\": \"{{BUSINESS_ID}}\",\n  \"service_id\": \"{{SERVICE_ID}}\",\n  \"requested_start_at\": \"2026-03-10T14:00:00.000Z\"\n}"
+                }
+            }
+        },
+        {
+            "name": "create_appointment — BLACKOUT",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{JWT_TOKEN}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{SUPABASE_URL}}/functions/v1/create_appointment",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"business_id\": \"{{BUSINESS_ID}}\",\n  \"service_id\": \"{{SERVICE_ID}}\",\n  \"requested_start_at\": \"2026-03-01T14:00:00.000Z\"\n}"
+                }
+            }
+        },
+        {
+            "name": "create_appointment — OUT_OF_HOURS",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{JWT_TOKEN}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{SUPABASE_URL}}/functions/v1/create_appointment",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"business_id\": \"{{BUSINESS_ID}}\",\n  \"service_id\": \"{{SERVICE_ID}}\",\n  \"requested_start_at\": \"2026-03-10T23:00:00.000Z\"\n}"
+                }
+            }
+        },
+        {
+            "name": "update_appointment_status — confirm",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{JWT_TOKEN}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{SUPABASE_URL}}/functions/v1/update_appointment_status",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"appointment_id\": \"{{APPOINTMENT_ID}}\",\n  \"status\": \"confirmed\"\n}"
+                }
+            }
+        },
+        {
+            "name": "update_appointment_status — cancel (client)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{JWT_TOKEN}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{SUPABASE_URL}}/functions/v1/update_appointment_status",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"appointment_id\": \"{{APPOINTMENT_ID}}\",\n  \"status\": \"cancelled\"\n}"
+                }
+            }
+        },
+        {
+            "name": "get_admin_analytics — month",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{JWT_TOKEN}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{SUPABASE_URL}}/functions/v1/get_admin_analytics",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"business_id\": \"{{BUSINESS_ID}}\",\n  \"period\": \"month\"\n}"
+                }
+            }
+        },
+        {
+            "name": "search_businesses",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{SUPABASE_URL}}/functions/v1/search_businesses",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"q\": \"Barbería\"\n}"
+                }
+            }
+        }
+    ]
+}
