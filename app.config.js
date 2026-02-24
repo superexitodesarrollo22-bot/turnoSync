@@ -41,7 +41,12 @@ export default {
                     "autoVerify": true,
                     "data": [
                         {
-                            "scheme": "turnosync"
+                            "scheme": "turnosync",
+                            "host": "auth",
+                            "pathPrefix": "/callback"
+                        },
+                        {
+                            "scheme": "exp"
                         }
                     ],
                     "category": [

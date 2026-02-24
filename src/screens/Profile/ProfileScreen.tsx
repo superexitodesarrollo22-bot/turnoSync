@@ -14,6 +14,8 @@ export default function ProfileScreen() {
     const { user, loading } = useCurrentUser();
     const { signOut } = useAuth();
 
+    console.log('ProfileScreen State:', { user: user?.email, loading });
+
     if (loading) return (
         <View style={{ flex: 1, backgroundColor: colors.background, padding: 20, paddingTop: 60, alignItems: 'center' }}>
             <SkeletonBox width={80} height={80} borderRadius={40} style={{ marginTop: 20 }} />

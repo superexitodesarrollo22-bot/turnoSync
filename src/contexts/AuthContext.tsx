@@ -1,30 +1,69 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
+import { AppState, AppStateStatus, Platform, Alert } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Session } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
 
+// IMPORTANTE: Configurar WebBrowser
 WebBrowser.maybeCompleteAuthSession();
 
+interface UserProfile {
+    id: string;
+    supabase_auth_uid: string;
+    email: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    created_at: string;
+}
+
 interface AuthContextType {
+    user: User | null;
     session: Session | null;
-    user: any | null;
-    profile: any | null;
+    profile: UserProfile | null;
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
     signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+const AuthContext = createContext<AuthContextType>({
+    user: null,
+    session: null,
+    profile: null,
+    loading: true,
+    signInWithGoogle: async () => { },
+    signOut: async () => { },
+});
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
-    const [user, setUser] = useState<any | null>(null);
-    const [profile, setProfile] = useState<any | null>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const loadUserProfile = async (authUid: string, retries = 5) => {
+    // Función para obtener el redirect URL correcto según el entorno
+    const getRedirectUrl = () => {
+        // En desarrollo con Expo Go
+        if (__DEV__) {
+            const redirectUrl = Linking.createURL('auth/callback');
+            console.log('🔗 [DEV] Redirect URL:', redirectUrl);
+            return redirectUrl;
+        }
+
+        // En producción (APK)
+        const redirectUrl = 'turnosync://auth/callback';
+        console.log('🔗 [PROD] Redirect URL:', redirectUrl);
+        return redirectUrl;
+    };
+
+    // Cargar perfil del usuario
+    const loadUserProfile = async (authUid: string, attempt = 1): Promise<void> => {
+        const MAX_ATTEMPTS = 5;
+        const RETRY_DELAY = 2000;
+
+        console.log(`🔍 [Intento ${attempt}/${MAX_ATTEMPTS}] Cargando perfil para UID: ${authUid}`);
+
         try {
-            console.log('Intentando cargar perfil para:', authUid);
             const { data, error } = await supabase
                 .from('users')
                 .select('*')
@@ -32,71 +71,74 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 .single();
 
             if (error) {
-                console.warn('Error loading profile (retries left: ' + retries + '):', error.message);
-                if (retries > 0) {
-                    // Esperar 2 segundos y reintentar si el perfil no existe aún
-                    // (Útil si el trigger de Supabase está trabajando)
-                    setTimeout(() => loadUserProfile(authUid, retries - 1), 2000);
+                console.error(`❌ Error al cargar perfil (intento ${attempt}):`, error.message);
+
+                if ((error.code === 'PGRST116' || error.message.includes('no rows')) && attempt < MAX_ATTEMPTS) {
+                    console.log(`⏳ Usuario no encontrado, reintentando en ${RETRY_DELAY / 1000}s...`);
+                    setTimeout(() => {
+                        loadUserProfile(authUid, attempt + 1);
+                    }, RETRY_DELAY);
                     return;
                 }
-                setProfile(null);
-                setLoading(false);
-                return;
+
+                if (attempt >= MAX_ATTEMPTS) {
+                    console.error('❌ Se agotaron los intentos. Usuario no se creó en public.users');
+                    console.error('💡 Verifica que el trigger de Supabase esté funcionando');
+                    setLoading(false);
+                    return;
+                }
+
+                throw error;
             }
 
-            console.log('Perfil cargado exitosamente:', data);
+            console.log('✅ Perfil cargado exitosamente:', data);
             setProfile(data);
             setLoading(false);
         } catch (error) {
-            console.error('Error fatal en loadUserProfile:', error);
+            console.error('❌ Error fatal al cargar perfil:', error);
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        // Obtener sesión inicial
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            console.log('Sesión inicial:', session?.user?.email);
-            setSession(session);
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                loadUserProfile(session.user.id);
-            } else {
-                setLoading(false);
-            }
-        });
-
-        // Escuchar cambios de autenticación
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('Evento de Auth:', event);
-            setSession(session);
-            setUser(session?.user ?? null);
-
-            if (session?.user) {
-                await loadUserProfile(session.user.id);
-            } else {
-                setProfile(null);
-                if (event === 'SIGNED_OUT') {
-                    setLoading(false);
-                }
-            }
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
-
+    // Login con Google
     const signInWithGoogle = async () => {
         try {
-            const redirectTo = 'turnosync://auth/callback';
+            setLoading(true);
+            console.log('🔐 Iniciando login con Google...');
+            console.log('📱 Entorno:', __DEV__ ? 'DESARROLLO' : 'PRODUCCIÓN');
+            console.log('📱 Platform:', Platform.OS);
+
+            const redirectUrl = getRedirectUrl();
+
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: { redirectTo, skipBrowserRedirect: true, queryParams: { prompt: 'select_account' } },
+                options: {
+                    redirectTo: redirectUrl,
+                    skipBrowserRedirect: true,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
+                },
             });
 
-            if (error) throw error;
-            if (!data?.url) return;
+            if (error) {
+                console.error('❌ Error en signInWithOAuth:', error);
+                throw error;
+            }
 
-            const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+            console.log('🌐 Abriendo navegador para OAuth...');
+            console.log('🔗 URL de OAuth:', data.url);
+
+            const result = await WebBrowser.openAuthSessionAsync(
+                data.url,
+                redirectUrl,
+                {
+                    showInRecents: true,
+                }
+            );
+
+            console.log('📱 Resultado del navegador:', result.type);
 
             if (result.type === 'success') {
                 const url = result.url;
@@ -106,26 +148,133 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 const refreshToken = params.get('refresh_token');
 
                 if (accessToken && refreshToken) {
-                    setLoading(true); // Activar loading mientras procesamos el setSession
+                    console.log('✅ Tokens recibidos, configurando sesión...');
                     await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+                } else {
+                    console.warn('⚠️ No se encontraron tokens en la URL de retorno');
+                    setLoading(false);
                 }
+            } else if (result.type === 'cancel') {
+                console.log('🚫 Usuario canceló el login');
+                setLoading(false);
+            } else {
+                setLoading(false);
             }
-        } catch (error) {
-            console.error('Error en signInWithGoogle:', error);
-            throw error;
+
+        } catch (error: any) {
+            console.error('❌ Error fatal en signInWithGoogle:', error);
+            Alert.alert('Error', error.message || 'No se pudo iniciar sesión.');
+            setLoading(false);
         }
     };
 
+    // Monitor de estado de la app
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+            if (nextAppState === 'active' && session && !profile) {
+                console.log('📱 App volvió a foreground, verificando sesión...');
+                supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+                    if (currentSession?.user) {
+                        console.log('🔄 Reintentando cargar perfil...');
+                        loadUserProfile(currentSession.user.id);
+                    }
+                });
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, [session, profile]);
+
+    // Inicialización y listeners de autenticación
+    useEffect(() => {
+        console.log('🚀 Inicializando AuthContext...');
+        console.log('📱 Entorno de ejecución:', __DEV__ ? 'DESARROLLO' : 'PRODUCCIÓN');
+
+        supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+            console.log('📱 Sesión inicial:', initialSession ? '✅ Existe' : '❌ No existe');
+
+            setSession(initialSession);
+            setUser(initialSession?.user ?? null);
+
+            if (initialSession?.user) {
+                console.log('👤 Usuario encontrado, cargando perfil...');
+                loadUserProfile(initialSession.user.id);
+            } else {
+                console.log('👤 No hay usuario, finalizando carga...');
+                setLoading(false);
+            }
+        }).catch((error) => {
+            console.error('❌ Error al obtener sesión inicial:', error);
+            setLoading(false);
+        });
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, newSession) => {
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('🔐 Evento de Auth:', event);
+                console.log('👤 Nueva sesión:', newSession ? '✅ Existe' : '❌ No existe');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
+
+                if (event === 'SIGNED_IN' && newSession?.user) {
+                    console.log('✅ Usuario inició sesión, cargando perfil...');
+                    setLoading(true);
+                    await loadUserProfile(newSession.user.id);
+                } else if (event === 'SIGNED_OUT') {
+                    console.log('👋 Usuario cerró sesión');
+                    setProfile(null);
+                    setLoading(false);
+                } else if (event === 'TOKEN_REFRESHED') {
+                    console.log('🔄 Token refrescado');
+                }
+            }
+        );
+
+        return () => {
+            console.log('🧹 Limpiando suscripción de auth...');
+            subscription.unsubscribe();
+        };
+    }, []);
+
     const signOut = async () => {
-        setLoading(true);
-        await supabase.auth.signOut();
+        try {
+            console.log('👋 Cerrando sesión...');
+            setLoading(true);
+            const { error } = await supabase.auth.signOut();
+
+            if (error) throw error;
+
+            console.log('✅ Sesión cerrada exitosamente');
+            setProfile(null);
+            setUser(null);
+            setSession(null);
+        } catch (error) {
+            console.error('❌ Error en signOut:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    return (
-        <AuthContext.Provider value={{ session, user, profile, loading, signInWithGoogle, signOut }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    const value: AuthContextType = {
+        user,
+        session,
+        profile,
+        loading,
+        signInWithGoogle,
+        signOut,
+    };
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth debe usarse dentro de AuthProvider');
+    }
+    return context;
+};

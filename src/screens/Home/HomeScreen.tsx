@@ -13,10 +13,12 @@ import { HomeScreenSkeleton } from '../../components/skeletons/HomeScreenSkeleto
 export default function HomeScreen({ navigation }: any) {
     const { colors, isDark } = useTheme();
     const insets = useSafeAreaInsets();
-    const { user } = useCurrentUser();
+    const { user, loading: userLoading } = useCurrentUser();
     const [query, setQuery] = useState('');
     const [showMenu, setShowMenu] = useState(false);
     const { businesses, loading } = useBusinesses(query);
+
+    console.log('HomeScreen State:', { user: user?.email, userLoading, businessesCount: businesses.length, loading });
 
     const firstName = user?.full_name?.split(' ')[0] ?? 'Bienvenido';
 
