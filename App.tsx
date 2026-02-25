@@ -4,7 +4,25 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
+import AuthCallbackScreen from './src/screens/Auth/AuthCallbackScreen';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as Linking from 'expo-linking';
+
+const Stack = createNativeStackNavigator();
+
+const linking = {
+  prefixes: [
+    'turnosync://', // Producción
+    'exp://', // Desarrollo
+    Linking.createURL('/'), // Expo Go dynamic
+  ],
+  config: {
+    screens: {
+      AuthCallback: 'auth/callback',
+    },
+  },
+};
 
 function RootNavigator() {
   const { user, profile, loading } = useAuth();
@@ -26,30 +44,26 @@ function RootNavigator() {
     );
   }
 
-  // Estado 2: Usuario autenticado pero esperando perfil
-  if (user && !profile) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.text}>Configurando tu perfil...</Text>
-        <Text style={styles.subtext}>Solo un momento</Text>
-      </View>
-    );
-  }
-
-  // Estado 3: Decidir navegación
-  const shouldShowApp = user && profile;
-
-  console.log('🧭 Navegando a:', shouldShowApp ? 'AppNavigator' : 'AuthNavigator');
-
-  return shouldShowApp ? <AppNavigator /> : <AuthNavigator />;
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {user && profile ? (
+        <Stack.Screen name="App" component={AppNavigator} />
+      ) : (
+        <Stack.Screen name="Auth" component={AuthNavigator} />
+      )}
+      {/* Pantalla de callback siempre accesible por deep linking */}
+      <Stack.Group screenOptions={{ presentation: 'transparentModal', headerShown: false }}>
+        <Stack.Screen name="AuthCallback" component={AuthCallbackScreen} />
+      </Stack.Group>
+    </Stack.Navigator>
+  );
 }
 
 export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
           <RootNavigator />
         </NavigationContainer>
       </AuthProvider>
@@ -62,7 +76,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0D0D1A', // Usamos el color oscuro del tema
+    backgroundColor: '#0D0D1A',
   },
   text: {
     marginTop: 16,

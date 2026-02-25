@@ -12,7 +12,10 @@ export default function LoginScreen() {
     const handleGoogleLogin = async () => {
         try {
             setIsLoading(true);
-            await signInWithGoogle();
+            const { error } = await signInWithGoogle();
+            if (error && error !== 'Cancelado por el usuario') {
+                Alert.alert('Error', error);
+            }
         } catch (error: any) {
             console.error('❌ Error en login:', error);
             Alert.alert(

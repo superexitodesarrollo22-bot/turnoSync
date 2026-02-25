@@ -97,7 +97,14 @@ export default {
                     "locationAlwaysAndWhenInUsePermission": "TurnoSync necesita tu ubicación para mostrarte barberías cercanas."
                 }
             ],
-            "expo-web-browser"
+            "expo-web-browser",
+            [
+                "expo-auth-session",
+                {
+                    "authorizationEndpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+                    "revokeEndpoint": "https://oauth2.googleapis.com/revoke"
+                }
+            ]
         ],
         "extra": {
             "eas": {
