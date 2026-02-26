@@ -1,27 +1,21 @@
 import React, { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../services/supabase';
 
 /**
- * Pantalla de callback para web.
- * Supabase redirige aquí con tokens en la URL.
- * Esta pantalla simplemente espera a que se procesen.
+ * Pantalla intermedia que se muestra cuando Supabase redirige desde el callback.
+ * Solo espera a que se procesen los tokens.
  */
 export default function AuthCallbackScreen() {
-    const navigation = useNavigation();
     const { colors } = useTheme();
 
     useEffect(() => {
-        const handleCallback = async () => {
+        const processCallback = async () => {
             try {
-                // Supabase detecta automáticamente los tokens en la URL en web
-                // El onAuthStateChange en AuthProvider se dispara automáticamente
+                console.log('[AuthCallback] Procesando callback...');
 
-                console.log('[AuthCallback] Esperando procesamiento de tokens...');
-
-                // Obtener sesión para confirmar
+                // Obtener la sesión que Supabase acaba de establecer
                 const { data, error } = await supabase.auth.getSession();
 
                 if (error) {
@@ -30,35 +24,26 @@ export default function AuthCallbackScreen() {
                 }
 
                 if (data.session) {
-                    console.log('[AuthCallback] ✅ Sesión establecida, esperando redirección...');
-                    // El AuthProvider/RootNavigator ya redirigirá al usuario
-                    // Esta pantalla solo es un placeholder
+                    console.log('[AuthCallback] ✅ Sesión establecida');
+                    // El onAuthStateChange en AuthContext se dispara automáticamente
+                    // y redirige al usuario a la app principal
                 } else {
-                    console.log('[AuthCallback] No hay sesión aún, esperando...');
-                    // Podría ser que aún no se haya procesado completamente
+                    console.log('[AuthCallback] Esperando sesión...');
                 }
             } catch (err) {
-                console.error('[AuthCallback] Catch error:', err);
+                console.error('[AuthCallback]', err);
             }
         };
 
-        // Pequeño delay para permitir que Supabase procese
-        const timeout = setTimeout(handleCallback, 1000);
-
+        // Pequeña espera para que Supabase procese completamente
+        const timeout = setTimeout(processCallback, 500);
         return () => clearTimeout(timeout);
     }, []);
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
             <ActivityIndicator size="large" color={colors.accent} />
+            <Text style={{ color: colors.textSecondary, marginTop: 16 }}>Procesando autenticación...</Text>
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-});

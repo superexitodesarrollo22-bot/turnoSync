@@ -25,13 +25,12 @@ const linking = {
 };
 
 function RootNavigator() {
-  const { user, profile, loading } = useAuth();
+  const { session, loading } = useAuth();
 
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('🎯 Estado de App:');
   console.log('   Loading:', loading);
-  console.log('   User:', user ? `✅ ${user.email}` : '❌ No user');
-  console.log('   Profile:', profile ? `✅ ${profile.email}` : '❌ No profile');
+  console.log('   Session:', session ? `✅ ${session.user.email}` : '❌ No session');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Estado 1: Cargando autenticación inicial
@@ -46,15 +45,17 @@ function RootNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user && profile ? (
+      {session ? (
         <Stack.Screen name="App" component={AppNavigator} />
       ) : (
         <Stack.Screen name="Auth" component={AuthNavigator} />
       )}
       {/* Pantalla de callback siempre accesible por deep linking */}
-      <Stack.Group screenOptions={{ presentation: 'transparentModal', headerShown: false }}>
-        <Stack.Screen name="AuthCallback" component={AuthCallbackScreen} />
-      </Stack.Group>
+      <Stack.Screen
+        name="AuthCallback"
+        component={AuthCallbackScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }
