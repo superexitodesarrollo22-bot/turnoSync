@@ -83,9 +83,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log('[OAuth] 📱 MÓVIL - usando WebBrowser + deep linking');
 
             // MANTENER tu estructura de __DEV__
-            const redirectUrl = __DEV__
-                ? Linking.createURL('auth/callback')  // exp://auth/callback en dev
-                : 'turnosync://auth/callback';         // turnosync://auth/callback en prod
+            //const redirectUrl = __DEV__
+            //    ? Linking.createURL('auth/callback')  // exp://auth/callback en dev
+            //    : 'turnosync://auth/callback';         // turnosync://auth/callback en prod
+
+            const redirectUrl = 'turnosync://auth/callback';
 
             console.log('[OAuth] Redirect URL:', redirectUrl);
             console.log('[OAuth] __DEV__:', __DEV__);
