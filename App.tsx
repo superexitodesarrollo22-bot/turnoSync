@@ -14,7 +14,7 @@ const Stack = createNativeStackNavigator();
 const linking = {
   prefixes: [
     'turnosync://', // Producción
-    'exp://', // Desarrollo
+    'exp://', // Desarrollo  
     Linking.createURL('/'), // Expo Go dynamic
   ],
   config: {
