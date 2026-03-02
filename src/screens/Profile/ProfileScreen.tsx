@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
+import { AppLogo } from '../../components/ui/AppLogo';
 import { useAuth } from '../../contexts/AuthContext';
 import { ProfileScreenSkeleton } from '../../components/ui/SkeletonLoader';
 
@@ -45,6 +46,12 @@ export default function ProfileScreen({ navigation }: any) {
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Branding Header */}
+                <View style={styles.brandingHeader}>
+                    <AppLogo size={40} iconSize={18} />
+                    <Text style={styles.brandingTitle}>TurnoSync</Text>
+                </View>
+
                 {/* Header Profile */}
                 <View style={styles.profileHeader}>
                     <View style={styles.avatarWrapper}>
@@ -117,4 +124,17 @@ const styles = StyleSheet.create({
     iconCircle: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
     menuLabel: { color: COLORS.white, fontSize: 16, fontWeight: '500' },
     versionText: { textAlign: 'center', color: '#4A4A5A', fontSize: 12, marginVertical: 30 },
+    brandingHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        gap: 12,
+    },
+    brandingTitle: {
+        color: COLORS.white,
+        fontSize: 18,
+        fontWeight: 'bold',
+        letterSpacing: 1,
+    },
 });

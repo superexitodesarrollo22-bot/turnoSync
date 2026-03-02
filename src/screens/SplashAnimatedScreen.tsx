@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -10,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
 import { useNavigation } from '@react-navigation/native';
+import { AppLogo } from '../components/ui/AppLogo';
 
 const { width } = Dimensions.get('window');
 
@@ -68,11 +70,7 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
                     entering={FadeIn.duration(800)}
                     style={styles.logoContainer}
                 >
-                    <Animated.Image
-                        source={require('../../assets/vantage-logo.png')}
-                        style={styles.logo}
-                        resizeMode="contain"
-                    />
+                    <AppLogo size={70} />
                 </Animated.View>
 
                 <View style={styles.brandContainer}>
@@ -139,10 +137,18 @@ const styles = StyleSheet.create({
         width: 180,
         height: 180,
         marginBottom: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    logo: {
-        width: '100%',
-        height: '100%',
+    logoCircle: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        backgroundColor: 'rgba(201, 168, 76, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: COLORS.gold,
     },
     brandContainer: {
         alignItems: 'center',

@@ -4,10 +4,10 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    Image,
     ActivityIndicator,
     Alert,
-    Dimensions
+    Dimensions,
+    ScrollView
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
@@ -15,6 +15,7 @@ import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AppLogo } from '../../components/ui/AppLogo';
 
 const { width } = Dimensions.get('window');
 
@@ -64,16 +65,13 @@ export default function LoginScreen() {
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.content}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
+            >
                 {/* Logo Section */}
                 <View style={styles.logoWrapper}>
-                    <View style={styles.logoCircle}>
-                        <Image
-                            source={require('../../assets/vantage-logo.png')}
-                            style={styles.logo}
-                            resizeMode="contain"
-                        />
-                    </View>
+                    <AppLogo size={70} />
                 </View>
 
                 {/* Welcome Text */}
@@ -116,30 +114,29 @@ export default function LoginScreen() {
                         <FontAwesome5 name="apple" size={20} color={COLORS.white} />
                         <Text style={styles.socialBtnText}>Apple</Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity
                         style={styles.socialBtn}
                         onPress={() => handleSocialLogin('facebook')}
                     >
-                        <FontAwesome5 name="facebook-f" size={18} color={COLORS.white} />
+                        <FontAwesome5 name="facebook" size={20} color="#1877F2" />
                         <Text style={styles.socialBtnText}>Facebook</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* Bottom Links */}
+                {/* Footer */}
                 <View style={styles.footer}>
                     <View style={styles.signInRow}>
-                        <Text style={styles.footerText}>Already have an account? </Text>
+                        <Text style={styles.footerText}>Existing user? </Text>
                         <TouchableOpacity onPress={() => navigation.navigate('EmailLogin')}>
-                            <Text style={styles.signInText}>Sign In</Text>
+                            <Text style={styles.signInText}>Sign in with Email</Text>
                         </TouchableOpacity>
                     </View>
 
                     <Text style={styles.legalText}>
-                        BY CONTINUING, YOU AGREE TO OUR TERMS OF SERVICE AND PRIVACY POLICY
+                        By continuing, you agree to TurnoSync's Terms of Service and Privacy Policy.
                     </Text>
                 </View>
-            </View>
+            </ScrollView>
         </View>
     );
 }
@@ -160,28 +157,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     content: {
-        flex: 1,
         alignItems: 'center',
         paddingHorizontal: 30,
         paddingTop: 20,
+        paddingBottom: 40,
     },
     logoWrapper: {
         marginBottom: 40,
-    },
-    logoCircle: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: 'rgba(201, 168, 76, 0.2)', // Dorado con opacidad
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.gold,
-        overflow: 'hidden',
-    },
-    logo: {
-        width: '100%',
-        height: '100%',
     },
     title: {
         color: COLORS.white,
@@ -260,8 +242,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     footer: {
-        marginTop: 'auto',
-        marginBottom: 30,
+        marginTop: 40,
         alignItems: 'center',
     },
     signInRow: {

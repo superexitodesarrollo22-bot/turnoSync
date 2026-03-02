@@ -14,6 +14,7 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { HomeScreenSkeleton } from '../../components/ui/SkeletonLoader';
+import { AppLogo } from '../../components/ui/AppLogo';
 
 const COLORS = {
     background: '#0D0D1A',
@@ -54,7 +55,10 @@ export default function HomeScreen({ navigation }: any) {
                             </Text>
                         )}
                     </View>
-                    <Text style={styles.brandName}>BarberPro</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <AppLogo size={24} iconSize={12} style={{ marginRight: 8 }} />
+                        <Text style={styles.brandName}>BarberPro</Text>
+                    </View>
                 </View>
                 <TouchableOpacity
                     style={styles.notificationBtn}
@@ -77,7 +81,7 @@ export default function HomeScreen({ navigation }: any) {
                 {/* Featured Card */}
                 <TouchableOpacity style={styles.featuredCard} activeOpacity={0.9}>
                     <Image
-                        source={require('../../assets/splash.png')}
+                        source={require('../../../assets/splash.png')}
                         style={styles.featuredImage}
                         resizeMode="cover"
                     />
