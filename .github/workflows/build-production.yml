@@ -1,8 +1,4 @@
-name: Build
-
-env:
-    EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-  run: eas build --platform android --non-interactive
+name: Build — EAS Production
 
 on:
   push:
@@ -31,6 +27,3 @@ jobs:
 
       - name: Build Android (AAB)
         run: eas build --platform android --profile production --non-interactive
-
-      - name: Build iOS (IPA)
-        run: eas build --platform ios --profile production --non-interactive
