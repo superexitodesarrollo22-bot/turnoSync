@@ -6,7 +6,7 @@
 -- ============================================================
 
 -- 1. Create (or Replace) the Trigger Function
-CREATE OR REPLACE FUNCTION public.handle_new_user()
+CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS trigger AS $$
 BEGIN
   -- Insert or Update based on email conflict
