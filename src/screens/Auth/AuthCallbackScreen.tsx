@@ -3,9 +3,10 @@ import { View, ActivityIndicator, Text } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../services/supabase';
+import { StatusBar } from 'expo-status-bar';
 
 export default function AuthCallbackScreen() {
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
 
     useEffect(() => {
         const processCallback = async () => {
@@ -57,6 +58,7 @@ export default function AuthCallbackScreen() {
 
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+            <StatusBar style={isDark ? "light" : "dark"} />
             <ActivityIndicator size="large" color={colors.accent} />
             <Text style={{ color: colors.textSecondary, marginTop: 16 }}>
                 Procesando autenticación...

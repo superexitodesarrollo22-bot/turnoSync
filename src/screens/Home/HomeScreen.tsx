@@ -1,146 +1,157 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    ScrollView,
     TouchableOpacity,
     Image,
-    Alert
+    FlatList,
+    TextInput,
+    ActivityIndicator,
+    Dimensions
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
+import { useBusinesses } from '../../hooks/useBusinesses';
 import { HomeScreenSkeleton } from '../../components/ui/SkeletonLoader';
-import { AppLogo } from '../../components/ui/AppLogo';
 
-const COLORS = {
-    background: '#0D0D1A',
-    surface: '#1A1A2E',
-    border: '#2A2A3E',
-    gold: '#C9A84C',
-    white: '#FFFFFF',
-    textSecondary: '#A0A0B0',
-    success: '#4CAF50',
-};
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }: any) {
-    const { isDark } = useTheme();
     const insets = useSafeAreaInsets();
-    const { user, loading } = useCurrentUser();
+    const { colors } = useTheme();
+    const [searchQuery, setSearchQuery] = useState('');
+    const { businesses, loading: bizLoading } = useBusinesses(searchQuery);
+    const { user, loading: userLoading } = useCurrentUser();
 
-    if (loading) return <HomeScreenSkeleton />;
+    if (userLoading) {
+        return (
+            <View style={{ flex: 1, backgroundColor: '#0D0D1A' }}>
+                <HomeScreenSkeleton />
+            </View>
+        );
+    }
 
-    const firstName = user?.full_name?.split(' ')[0] ?? 'there';
+    const firstName = user?.full_name?.split(' ')[0] ?? 'Usuario';
 
-    const handleNotifications = () => {
-        Alert.alert('Notificaciones', 'Notificaciones próximamente');
-    };
+    const renderBusinessCard = ({ item }: { item: any }) => (
+        <TouchableOpacity
+            style={styles.card}
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id, business: item })}
+        >
+            {/* Top Part */}
+            <View style={styles.cardHeader}>
+                <Feather name="scissors" size={44} color="#C9A84C" style={{ opacity: 0.25 }} />
+                <View style={[styles.statusBadge, { backgroundColor: '#4CAF50' }]}>
+                    <Text style={styles.statusText}>Abierto</Text>
+                </View>
+            </View>
+
+            {/* Bottom Part */}
+            <View style={styles.cardBody}>
+                <Text style={styles.businessName}>{item.name}</Text>
+
+                <View style={styles.infoRow}>
+                    <Feather name="map-pin" size={12} color="#C9A84C" style={styles.infoIcon} />
+                    <Text style={styles.infoText} numberOfLines={1}>{item.address}</Text>
+                </View>
+
+                {item.phone && (
+                    <View style={styles.infoRow}>
+                        <Feather name="phone" size={12} color="#C9A84C" style={styles.infoIcon} />
+                        <Text style={styles.infoText}>{item.phone}</Text>
+                    </View>
+                )}
+
+                {item.description && (
+                    <Text style={styles.description} numberOfLines={2}>
+                        {item.description}
+                    </Text>
+                )}
+
+                <TouchableOpacity
+                    style={styles.reserveBtn}
+                    onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id, business: item })}
+                >
+                    <Text style={styles.reserveBtnText}>Reservar ahora</Text>
+                </TouchableOpacity>
+            </View>
+        </TouchableOpacity>
+    );
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: '#0D0D1A' }]}>
             <StatusBar style="light" />
 
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
                 <View style={styles.headerLeft}>
-                    <View style={styles.avatarCircle}>
-                        {user?.avatar_url ? (
-                            <Image source={{ uri: user.avatar_url }} style={styles.avatarImg} />
-                        ) : (
-                            <Text style={styles.avatarText}>
+                    {user?.avatar_url ? (
+                        <Image source={{ uri: user.avatar_url }} style={styles.avatarImg} />
+                    ) : (
+                        <View style={styles.avatarPlaceholder}>
+                            <Text style={styles.avatarInitials}>
                                 {user?.full_name?.charAt(0) || 'U'}
                             </Text>
-                        )}
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <AppLogo size={24} iconSize={12} style={{ marginRight: 8 }} />
-                        <Text style={styles.brandName}>BarberPro</Text>
+                        </View>
+                    )}
+                    <View>
+                        <Text style={styles.welcomeText}>Hola,</Text>
+                        <Text style={styles.userName}>{firstName}</Text>
                     </View>
                 </View>
-                <TouchableOpacity
-                    style={styles.notificationBtn}
-                    onPress={handleNotifications}
-                >
-                    <Feather name="bell" size={20} color={COLORS.white} />
+                <TouchableOpacity style={styles.bellBtn} activeOpacity={0.7}>
+                    <Feather name="bell" size={20} color="white" />
                 </TouchableOpacity>
             </View>
 
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                {/* Welcome Section */}
-                <View style={styles.welcomeSection}>
-                    <Text style={styles.welcomeTitle}>Welcome, {firstName}!</Text>
-                    <Text style={styles.welcomeSubtitle}>Ready for your next cut?</Text>
+            {/* Search Bar */}
+            <View style={styles.searchBar}>
+                <Feather name="search" size={18} color="#C9A84C" style={{ marginRight: 10 }} />
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Buscar barberías..."
+                    placeholderTextColor="#6B6B80"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                />
+                {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchQuery('')}>
+                        <Feather name="x" size={16} color="#6B6B80" />
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            {/* Section Title */}
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Barberías disponibles</Text>
+                <Text style={styles.sectionCount}>({businesses.length})</Text>
+            </View>
+
+            {/* List */}
+            {bizLoading && businesses.length === 0 ? (
+                <View style={styles.centered}>
+                    <ActivityIndicator color="#C9A84C" size="large" />
                 </View>
-
-                {/* Featured Card */}
-                <TouchableOpacity style={styles.featuredCard} activeOpacity={0.9}>
-                    <Image
-                        source={require('../../../assets/splash.png')}
-                        style={styles.featuredImage}
-                        resizeMode="cover"
-                    />
-                    <View style={styles.trendingBadge}>
-                        <Text style={styles.trendingText}>TRENDING</Text>
-                    </View>
-                    <View style={styles.cardInfo}>
-                        <Text style={styles.cardTitle}>Summer Fresh Styles</Text>
-                        <Text style={styles.cardDesc}>Check out the latest trends and styles for this season.</Text>
-                        <TouchableOpacity>
-                            <Text style={styles.cardLink}>Explore Gallery →</Text>
-                        </TouchableOpacity>
-                    </View>
-                </TouchableOpacity>
-
-                {/* Quick Actions */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>QUICK ACTIONS</Text>
+            ) : businesses.length === 0 ? (
+                <View style={[styles.centered, { paddingTop: 60 }]}>
+                    <Feather name="search" size={52} color="#C9A84C" style={{ opacity: 0.4, marginBottom: 16 }} />
+                    <Text style={styles.emptyTitle}>Sin resultados</Text>
+                    <Text style={styles.emptySubtitle}>Intenta con otro nombre</Text>
                 </View>
-
-                <TouchableOpacity
-                    style={styles.actionBtn}
-                    onPress={() => navigation.navigate('BusinessList')}
-                >
-                    <View style={styles.actionBtnLeft}>
-                        <View style={styles.iconBox}>
-                            <Feather name="calendar" size={18} color={COLORS.gold} />
-                        </View>
-                        <Text style={styles.actionBtnText}>Book Now</Text>
-                    </View>
-                    <Feather name="chevron-right" size={20} color={COLORS.textSecondary} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.actionBtn}
-                    onPress={() => navigation.navigate('Services')}
-                >
-                    <View style={styles.actionBtnLeft}>
-                        <View style={styles.iconBox}>
-                            <MaterialCommunityIcons name="content-cut" size={18} color={COLORS.gold} />
-                        </View>
-                        <Text style={styles.actionBtnText}>View Services</Text>
-                    </View>
-                    <Feather name="chevron-right" size={20} color={COLORS.textSecondary} />
-                </TouchableOpacity>
-
-                {/* Stats Row */}
-                <View style={styles.statsRow}>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>NEXT APPOINTMENT</Text>
-                        <Text style={styles.statValue}>Tomorrow, 10:30 AM</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>LOYALTY POINTS</Text>
-                        <Text style={styles.statValueGold}>450 pts</Text>
-                    </View>
-                </View>
-
-            </ScrollView>
+            ) : (
+                <FlatList
+                    data={businesses}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={renderBusinessCard}
+                />
+            )}
         </View>
     );
 }
@@ -148,185 +159,167 @@ export default function HomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
+        justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingBottom: 15,
+        paddingBottom: 12,
     },
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-    },
-    avatarCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: COLORS.gold,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-        overflow: 'hidden',
+        gap: 12,
     },
     avatarImg: {
-        width: '100%',
-        height: '100%',
+        width: 46,
+        height: 46,
+        borderRadius: 23,
+        borderWidth: 2,
+        borderColor: '#C9A84C',
     },
-    avatarText: {
-        color: '#0D0D1A',
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
-    brandName: {
-        color: COLORS.white,
-        fontSize: 18,
-        fontWeight: '700',
-    },
-    notificationBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: COLORS.surface,
+    avatarPlaceholder: {
+        width: 46,
+        height: 46,
+        borderRadius: 23,
+        backgroundColor: '#C9A84C',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.border,
     },
-    scrollContent: {
+    avatarInitials: {
+        color: '#0D0D1A',
+        fontWeight: 'bold',
+        fontSize: 18,
+    },
+    welcomeText: {
+        color: '#A0A0B0',
+        fontSize: 13,
+    },
+    userName: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    bellBtn: {
+        backgroundColor: '#1A1A2E',
+        borderRadius: 20,
+        padding: 10,
+    },
+    searchBar: {
+        marginHorizontal: 20,
+        marginBottom: 16,
+        backgroundColor: '#1A1A2E',
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 14,
+        height: 52,
+        borderWidth: 1,
+        borderColor: '#2A2A3E',
+    },
+    searchInput: {
+        flex: 1,
+        color: 'white',
+        fontSize: 15,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        marginBottom: 12,
+    },
+    sectionTitle: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    sectionCount: {
+        color: '#A0A0B0',
+        fontSize: 14,
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyTitle: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    emptySubtitle: {
+        color: '#A0A0B0',
+        fontSize: 14,
+        marginTop: 8,
+    },
+    listContent: {
         paddingHorizontal: 20,
         paddingBottom: 100,
     },
-    welcomeSection: {
-        marginTop: 20,
-        marginBottom: 30,
-    },
-    welcomeTitle: {
-        color: COLORS.white,
-        fontSize: 26,
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    welcomeSubtitle: {
-        color: COLORS.gold,
-        fontSize: 24,
-        fontWeight: 'bold',
-        lineHeight: 30,
-    },
-    featuredCard: {
-        width: '100%',
-        backgroundColor: COLORS.surface,
-        borderRadius: 20,
+    card: {
+        backgroundColor: '#1A1A2E',
+        borderRadius: 16,
+        marginBottom: 16,
         overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        marginBottom: 30,
     },
-    featuredImage: {
-        width: '100%',
-        height: 180,
+    cardHeader: {
+        height: 130,
+        backgroundColor: '#252538',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    trendingBadge: {
+    statusBadge: {
         position: 'absolute',
-        top: 15,
-        left: 15,
-        backgroundColor: COLORS.success,
+        top: 12,
+        right: 12,
+        backgroundColor: '#4CAF50',
+        borderRadius: 20,
         paddingHorizontal: 10,
         paddingVertical: 4,
-        borderRadius: 6,
     },
-    trendingText: {
-        color: COLORS.white,
-        fontSize: 10,
+    statusText: {
+        color: 'white',
+        fontSize: 11,
         fontWeight: 'bold',
     },
-    cardInfo: {
-        padding: 15,
+    cardBody: {
+        padding: 16,
     },
-    cardTitle: {
-        color: COLORS.white,
-        fontSize: 18,
+    businessName: {
+        color: 'white',
+        fontSize: 17,
         fontWeight: 'bold',
         marginBottom: 6,
     },
-    cardDesc: {
-        color: COLORS.textSecondary,
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    infoIcon: {
+        marginRight: 6,
+    },
+    infoText: {
+        color: '#A0A0B0',
         fontSize: 13,
-        marginBottom: 12,
-        lineHeight: 18,
+        flexShrink: 1,
     },
-    cardLink: {
-        color: COLORS.gold,
-        fontSize: 14,
-        fontWeight: '700',
-    },
-    sectionHeader: {
-        marginBottom: 15,
-    },
-    sectionLabel: {
-        color: COLORS.textSecondary,
+    description: {
+        color: '#6B6B80',
         fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 1,
-    },
-    actionBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: COLORS.surface,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 16,
-        padding: 16,
         marginBottom: 12,
     },
-    actionBtnLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    iconBox: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: 'rgba(201, 168, 76, 0.1)',
+    reserveBtn: {
+        backgroundColor: '#C9A84C',
+        borderRadius: 10,
+        height: 44,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 15,
     },
-    actionBtnText: {
-        color: COLORS.white,
-        fontSize: 15,
-        fontWeight: 'bold',
-    },
-    statsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 10,
-        gap: 12,
-    },
-    statCard: {
-        flex: 1,
-        backgroundColor: COLORS.surface,
-        borderRadius: 16,
-        padding: 15,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    statLabel: {
-        color: COLORS.textSecondary,
-        fontSize: 10,
-        fontWeight: '700',
-        marginBottom: 8,
-    },
-    statValue: {
-        color: COLORS.white,
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    statValueGold: {
-        color: COLORS.gold,
+    reserveBtnText: {
+        color: 'black',
         fontSize: 15,
         fontWeight: 'bold',
     },

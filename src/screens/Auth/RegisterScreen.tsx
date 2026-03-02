@@ -12,22 +12,14 @@ import {
     Platform
 } from 'react-native';
 import { supabase } from '../../services/supabase';
+import { useTheme } from '../../hooks/useTheme';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 
-const COLORS = {
-    background: '#0D0D1A',
-    surface: '#1A1A2E',
-    border: '#2A2A3E',
-    gold: '#C9A84C',
-    white: '#FFFFFF',
-    error: '#FF6B6B',
-    textSecondary: '#A0A0B0',
-};
-
 export default function RegisterScreen() {
     const navigation = useNavigation<any>();
+    const { colors, isDark } = useTheme();
 
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
@@ -104,36 +96,48 @@ export default function RegisterScreen() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.container}
+            style={[styles.container, { backgroundColor: colors.background }]}
         >
-            <StatusBar style="light" />
+            <StatusBar style={isDark ? "light" : "dark"} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                        <Feather name="arrow-left" size={24} color={COLORS.white} />
+                        <Feather name="arrow-left" size={24} color={colors.textPrimary} />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Create Account</Text>
+                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Create Account</Text>
                     <View style={{ width: 24 }} />
                 </View>
 
                 {/* Title Section */}
                 <View style={styles.titleSection}>
-                    <Text style={styles.mainTitle}>Join TurnoSync</Text>
-                    <Text style={styles.subTitle}>Set up your profile to start booking</Text>
+                    <Text style={[styles.mainTitle, { color: colors.textPrimary }]}>Join TurnoSync</Text>
+                    <Text style={[styles.subTitle, { color: colors.textSecondary }]}>Set up your profile to start booking</Text>
                 </View>
 
                 {/* Form */}
                 <View style={styles.form}>
                     {/* Full Name */}
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Full Name</Text>
-                        <View style={[styles.inputWrapper, errors.fullName ? styles.inputError : null]}>
+                        <Text style={[styles.label, { color: colors.textPrimary }]}>Full Name</Text>
+                        <View style={[
+                            styles.inputWrapper,
+                            {
+                                backgroundColor: colors.inputBackground,
+                                borderColor: colors.border,
+                                elevation: isDark ? 0 : 1,
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 1 },
+                                shadowOpacity: isDark ? 0 : 0.05,
+                                shadowRadius: 2,
+                            },
+                            errors.fullName ? styles.inputError : null
+                        ]}>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, { color: colors.textPrimary }]}
                                 placeholder="John Doe"
-                                placeholderTextColor={COLORS.textSecondary}
+                                placeholderTextColor={colors.textMuted}
                                 value={fullName}
                                 onChangeText={setFullName}
                             />
@@ -143,12 +147,24 @@ export default function RegisterScreen() {
 
                     {/* Email */}
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Email Address</Text>
-                        <View style={[styles.inputWrapper, errors.email ? styles.inputError : null]}>
+                        <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address</Text>
+                        <View style={[
+                            styles.inputWrapper,
+                            {
+                                backgroundColor: colors.inputBackground,
+                                borderColor: colors.border,
+                                elevation: isDark ? 0 : 1,
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 1 },
+                                shadowOpacity: isDark ? 0 : 0.05,
+                                shadowRadius: 2,
+                            },
+                            errors.email ? styles.inputError : null
+                        ]}>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, { color: colors.textPrimary }]}
                                 placeholder="name@example.com"
-                                placeholderTextColor={COLORS.textSecondary}
+                                placeholderTextColor={colors.textMuted}
                                 value={email}
                                 onChangeText={setEmail}
                                 autoCapitalize="none"
@@ -160,12 +176,24 @@ export default function RegisterScreen() {
 
                     {/* Password */}
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Password</Text>
-                        <View style={[styles.inputWrapper, errors.password ? styles.inputError : null]}>
+                        <Text style={[styles.label, { color: colors.textPrimary }]}>Password</Text>
+                        <View style={[
+                            styles.inputWrapper,
+                            {
+                                backgroundColor: colors.inputBackground,
+                                borderColor: colors.border,
+                                elevation: isDark ? 0 : 1,
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 1 },
+                                shadowOpacity: isDark ? 0 : 0.05,
+                                shadowRadius: 2,
+                            },
+                            errors.password ? styles.inputError : null
+                        ]}>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, { color: colors.textPrimary }]}
                                 placeholder="Min. 6 characters"
-                                placeholderTextColor={COLORS.textSecondary}
+                                placeholderTextColor={colors.textMuted}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry={!showPassword}
@@ -174,7 +202,7 @@ export default function RegisterScreen() {
                                 <Feather
                                     name={showPassword ? "eye" : "eye-off"}
                                     size={20}
-                                    color={COLORS.textSecondary}
+                                    color={colors.textSecondary}
                                 />
                             </TouchableOpacity>
                         </View>
@@ -183,22 +211,32 @@ export default function RegisterScreen() {
 
                     {/* Register Button */}
                     <TouchableOpacity
-                        style={styles.registerBtn}
+                        style={[
+                            styles.registerBtn,
+                            {
+                                backgroundColor: colors.accent,
+                                elevation: isDark ? 0 : 4,
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 3 },
+                                shadowOpacity: isDark ? 0 : 0.1,
+                                shadowRadius: 6,
+                            }
+                        ]}
                         onPress={handleRegister}
                         disabled={isLoading}
                     >
                         {isLoading ? (
-                            <ActivityIndicator color="#0D0D1A" />
+                            <ActivityIndicator color={isDark ? "#0D0D1A" : "#FFFFFF"} />
                         ) : (
-                            <Text style={styles.registerBtnText}>Create Account</Text>
+                            <Text style={[styles.registerBtnText, { color: isDark ? "#0D0D1A" : "#FFFFFF" }]}>Create Account</Text>
                         )}
                     </TouchableOpacity>
 
                     {/* Login Link */}
                     <View style={styles.loginContainer}>
-                        <Text style={styles.hasAccountText}>Already have an account? </Text>
+                        <Text style={[styles.hasAccountText, { color: colors.textSecondary }]}>Already have an account? </Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                            <Text style={styles.loginText}>Login</Text>
+                            <Text style={[styles.loginText, { color: colors.accent }]}>Login</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -209,104 +247,24 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.background,
-    },
-    scrollContent: {
-        paddingBottom: 40,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
-    },
-    backBtn: {
-        padding: 5,
-    },
-    headerTitle: {
-        color: COLORS.white,
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    titleSection: {
-        marginTop: 30,
-        paddingHorizontal: 24,
-    },
-    mainTitle: {
-        color: COLORS.white,
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    subTitle: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-    },
-    form: {
-        marginTop: 40,
-        paddingHorizontal: 24,
-    },
-    inputGroup: {
-        marginBottom: 20,
-    },
-    label: {
-        color: COLORS.white,
-        fontSize: 14,
-        fontWeight: '500',
-        marginBottom: 8,
-    },
-    inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.surface,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        height: 56,
-    },
-    input: {
-        flex: 1,
-        color: COLORS.white,
-        fontSize: 15,
-    },
-    inputError: {
-        borderColor: COLORS.error,
-    },
-    errorText: {
-        color: COLORS.error,
-        fontSize: 12,
-        marginTop: 4,
-    },
-    registerBtn: {
-        backgroundColor: COLORS.gold,
-        height: 56,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    registerBtnText: {
-        color: '#0D0D1A',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    loginContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 24,
-    },
-    hasAccountText: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-    },
-    loginText: {
-        color: COLORS.gold,
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
+    container: { flex: 1 },
+    scrollContent: { paddingBottom: 40 },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20 },
+    backBtn: { padding: 5 },
+    headerTitle: { fontSize: 18, fontWeight: '600' },
+    titleSection: { marginTop: 30, paddingHorizontal: 24 },
+    mainTitle: { fontSize: 28, fontWeight: 'bold', marginBottom: 8 },
+    subTitle: { fontSize: 14 },
+    form: { marginTop: 40, paddingHorizontal: 24 },
+    inputGroup: { marginBottom: 20 },
+    label: { fontSize: 14, fontWeight: '500', marginBottom: 8 },
+    inputWrapper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, height: 56 },
+    input: { flex: 1, fontSize: 15 },
+    inputError: { borderColor: '#FF6B6B' },
+    errorText: { color: '#FF6B6B', fontSize: 12, marginTop: 4 },
+    registerBtn: { height: 56, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+    registerBtnText: { fontSize: 16, fontWeight: 'bold' },
+    loginContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
+    hasAccountText: { fontSize: 14 },
+    loginText: { fontSize: 14, fontWeight: 'bold' },
 });

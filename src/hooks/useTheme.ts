@@ -2,23 +2,46 @@ import { useColorScheme } from 'react-native';
 
 export const Colors = {
     dark: {
-        background: '#0D0D1A', surface: '#1A1A2E', surfaceElevated: '#16213E',
-        accent: '#C9A84C', accentLight: '#E8C97A', textPrimary: '#FFFFFF',
-        textSecondary: '#A0A0B0', textMuted: '#5A5A70', divider: '#2A2A3E',
-        success: '#2ECC71', warning: '#F39C12', error: '#E74C3C',
-        cardBorder: '#2A2A45', inputBackground: '#1E1E35', navBar: '#12121F',
+        background: '#0D0D1A',
+        surface: '#1A1A2E',
+        surfaceElevated: '#252538',
+        border: '#2A2A3E',
+        accent: '#C9A84C',
+        accentDim: 'rgba(201,168,76,0.15)',
+        textPrimary: '#FFFFFF',
+        textSecondary: '#A0A0B0',
+        textMuted: '#6B6B80',
+        error: '#FF6B6B',
+        success: '#4CAF50',
+        navBar: '#0D0D1A',
+        divider: '#2A2A3E',
+        cardShadow: 'transparent',
+        inputBackground: '#1A1A2E',
+        statusBar: 'dark' as const,
     },
     light: {
-        background: '#F4F4F8', surface: '#FFFFFF', surfaceElevated: '#EFEFF5',
-        accent: '#B8923A', accentLight: '#C9A84C', textPrimary: '#0D0D1A',
-        textSecondary: '#6B6B80', textMuted: '#A0A0B0', divider: '#E0E0E8',
-        success: '#27AE60', warning: '#E67E22', error: '#C0392B',
-        cardBorder: '#E0E0EC', inputBackground: '#EDEDF5', navBar: '#FFFFFF',
+        background: '#F5F5F0',
+        surface: '#FFFFFF',
+        surfaceElevated: '#FAFAFA',
+        border: '#E8E8E0',
+        accent: '#B8961E',
+        accentDim: 'rgba(184,150,30,0.12)',
+        textPrimary: '#1A1A1A',
+        textSecondary: '#5A5A5A',
+        textMuted: '#9A9A9A',
+        error: '#D93025',
+        success: '#2E7D32',
+        navBar: '#FFFFFF',
+        divider: '#EEEEEE',
+        cardShadow: 'rgba(0,0,0,0.08)',
+        inputBackground: '#F8F8F4',
+        statusBar: 'light' as const,
     },
 };
 
 export const useTheme = () => {
-    const scheme = useColorScheme();
-    const colors = scheme === 'dark' ? Colors.dark : Colors.light;
-    return { colors, isDark: scheme === 'dark' };
+    const isDark = useColorScheme() === 'dark';
+    const colors = isDark ? Colors.dark : Colors.light;
+
+    return { colors, isDark };
 };

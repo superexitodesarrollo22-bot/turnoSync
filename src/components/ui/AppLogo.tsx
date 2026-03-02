@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../../hooks/useTheme';
 
 interface AppLogoProps {
     size?: number;
@@ -8,10 +9,10 @@ interface AppLogoProps {
     style?: ViewStyle;
 }
 
-export const AppLogo = ({ size = 70, iconSize, style }: AppLogoProps) => {
-    const gold = '#C9A84C';
+export const AppLogo = ({ size = 72, iconSize, style }: AppLogoProps) => {
+    const { colors } = useTheme();
     const borderRadius = size / 2;
-    const finalIconSize = iconSize || size * 0.45;
+    const finalIconSize = iconSize || 32;
 
     return (
         <View style={[
@@ -20,20 +21,20 @@ export const AppLogo = ({ size = 70, iconSize, style }: AppLogoProps) => {
                 width: size,
                 height: size,
                 borderRadius: borderRadius,
-                borderColor: gold
+                borderColor: colors.accent,
+                backgroundColor: colors.accentDim
             },
             style
         ]}>
-            <Feather name="scissors" size={finalIconSize} color={gold} />
+            <Feather name="scissors" size={finalIconSize} color={colors.accent} />
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     logoCircle: {
-        backgroundColor: 'rgba(201, 168, 76, 0.2)',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1.5,
+        borderWidth: 2,
     },
 });

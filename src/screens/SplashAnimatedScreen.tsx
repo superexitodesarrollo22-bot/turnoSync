@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -12,18 +11,12 @@ import Animated, {
 import * as SplashScreen from 'expo-splash-screen';
 import { useNavigation } from '@react-navigation/native';
 import { AppLogo } from '../components/ui/AppLogo';
+import { useTheme } from '../hooks/useTheme';
 
 const { width } = Dimensions.get('window');
 
-// Colores del diseño Luxury
-const COLORS = {
-    background: '#0D0D1A',
-    gold: '#C9A84C',
-    white: '#FFFFFF',
-    textSecondary: '#A0A0B0',
-};
-
 export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => void }) {
+    const { colors, isDark } = useTheme();
     const navigation = useNavigation<any>();
 
     // Estados animados
@@ -55,12 +48,12 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
     }));
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Texto superior: Redefining Excellence */}
             <View style={styles.topHeader}>
-                <Text style={styles.redefiningText}>REDEFINING EXCELLENCE</Text>
-                <View style={styles.loaderContainer}>
-                    <Animated.View style={[styles.loaderBar, progressStyle]} />
+                <Text style={[styles.redefiningText, { color: colors.textPrimary }]}>REDEFINING EXCELLENCE</Text>
+                <View style={[styles.loaderContainer, { backgroundColor: colors.accentDim }]}>
+                    <Animated.View style={[styles.loaderBar, { backgroundColor: colors.accent }, progressStyle]} />
                 </View>
             </View>
 
@@ -76,15 +69,15 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
                 <View style={styles.brandContainer}>
                     {/* Líneas decorativas laterales */}
                     <View style={styles.titleRow}>
-                        <Animated.View style={[styles.decorativeLine, lineStyle]} />
+                        <Animated.View style={[styles.decorativeLine, { backgroundColor: colors.accent }, lineStyle]} />
                         <Animated.View entering={FadeInDown.delay(400).duration(800)}>
-                            <Text style={styles.vantageText}>VANTAGE</Text>
+                            <Text style={[styles.vantageText, { color: colors.textPrimary }]}>VANTAGE</Text>
                         </Animated.View>
-                        <Animated.View style={[styles.decorativeLine, lineStyle]} />
+                        <Animated.View style={[styles.decorativeLine, { backgroundColor: colors.accent }, lineStyle]} />
                     </View>
 
                     <Animated.View entering={FadeIn.delay(600).duration(800)}>
-                        <Text style={styles.barberStudioText}>BARBER STUDIO</Text>
+                        <Text style={[styles.barberStudioText, { color: colors.accent }]}>BARBER STUDIO</Text>
                     </Animated.View>
                 </View>
             </View>
@@ -94,8 +87,8 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
                 entering={FadeIn.delay(1000).duration(800)}
                 style={styles.footer}
             >
-                <Text style={styles.footerText}>EST. 2024</Text>
-                <Text style={styles.footerText}>PREMIUM GROOMING</Text>
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>EST. 2024</Text>
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>PREMIUM GROOMING</Text>
             </Animated.View>
         </View>
     );
@@ -104,7 +97,6 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -114,7 +106,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     redefiningText: {
-        color: COLORS.white,
         fontSize: 10,
         letterSpacing: 4,
         fontWeight: '300',
@@ -123,11 +114,9 @@ const styles = StyleSheet.create({
     loaderContainer: {
         width: 120,
         height: 1,
-        backgroundColor: 'rgba(201, 168, 76, 0.2)',
     },
     loaderBar: {
         height: '100%',
-        backgroundColor: COLORS.gold,
     },
     centerContent: {
         alignItems: 'center',
@@ -140,16 +129,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    logoCircle: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: 'rgba(201, 168, 76, 0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: COLORS.gold,
-    },
     brandContainer: {
         alignItems: 'center',
     },
@@ -159,7 +138,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     vantageText: {
-        color: COLORS.white,
         fontSize: 48,
         fontWeight: 'bold',
         letterSpacing: 8,
@@ -168,10 +146,8 @@ const styles = StyleSheet.create({
     decorativeLine: {
         width: 40,
         height: 1,
-        backgroundColor: COLORS.gold,
     },
     barberStudioText: {
-        color: COLORS.gold,
         fontSize: 14,
         letterSpacing: 10,
         fontWeight: '600',
@@ -185,7 +161,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     footerText: {
-        color: COLORS.textSecondary,
         fontSize: 10,
         letterSpacing: 2,
     },

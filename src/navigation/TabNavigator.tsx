@@ -7,37 +7,30 @@ import { useTheme } from '../hooks/useTheme';
 import HomeScreen from '../screens/Home/HomeScreen';
 import MyBookingsScreen from '../screens/MyBookings/MyBookingsScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
-import ServicesScreen from '../screens/Services/ServicesScreen';
 
 const Tab = createBottomTabNavigator();
 
-const TabBarIcon = ({ name, color, focused }: { name: any, color: string, focused: boolean }) => (
-    <View style={{ alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+const TabBarIcon = ({ name, color, focused, accent }: { name: any, color: string, focused: boolean, accent: string }) => (
+    <View style={{ alignItems: 'center', justifyContent: 'center', height: '100%', paddingTop: 5 }}>
         <Feather name={name} size={22} color={color} />
         {focused && (
             <View style={{
                 width: 4,
                 height: 4,
                 borderRadius: 2,
-                backgroundColor: '#C9A84C',
+                backgroundColor: accent,
                 marginTop: 4,
-                position: 'absolute',
-                bottom: -8
             }} />
         )}
     </View>
 );
 
 export default function TabNavigator() {
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const insets = useSafeAreaInsets();
 
-    const COLORS = {
-        background: '#0D0D1A',
-        gold: '#C9A84C',
-        inactive: '#4A4A5A',
-        border: '#2A2A3E',
-    };
+    const ACTIVE_COLOR = '#C9A84C';
+    const INACTIVE_COLOR = '#4A4A5A';
 
     return (
         <Tab.Navigator
@@ -47,29 +40,30 @@ export default function TabNavigator() {
                     const icons: any = {
                         Home: 'home',
                         MyBookings: 'calendar',
-                        Services: 'scissors',
                         Profile: 'user'
                     };
-                    return <TabBarIcon name={icons[route.name]} color={color} focused={focused} />;
+                    return <TabBarIcon name={icons[route.name]} color={color} focused={focused} accent={ACTIVE_COLOR} />;
                 },
-                tabBarActiveTintColor: COLORS.gold,
-                tabBarInactiveTintColor: COLORS.inactive,
+                tabBarActiveTintColor: ACTIVE_COLOR,
+                tabBarInactiveTintColor: INACTIVE_COLOR,
                 tabBarStyle: {
-                    backgroundColor: COLORS.background,
-                    borderTopColor: COLORS.border,
+                    backgroundColor: colors.navBar,
+                    borderTopColor: colors.divider,
                     borderTopWidth: 1,
                     height: 60 + insets.bottom,
                     paddingBottom: insets.bottom,
                     paddingTop: 8,
-                    elevation: 0,
-                    shadowOpacity: 0,
+                    elevation: isDark ? 0 : 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -4 },
+                    shadowOpacity: isDark ? 0 : 0.06,
+                    shadowRadius: 8,
                 },
                 tabBarLabelStyle: { fontSize: 10, fontWeight: 'bold' },
             })}
         >
             <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Inicio' }} />
             <Tab.Screen name="MyBookings" component={MyBookingsScreen} options={{ tabBarLabel: 'Turnos' }} />
-            <Tab.Screen name="Services" component={ServicesScreen} options={{ tabBarLabel: 'Servicios' }} />
             <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />
         </Tab.Navigator>
     );
