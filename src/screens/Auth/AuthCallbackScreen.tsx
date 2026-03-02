@@ -1,12 +1,9 @@
 import React, { useEffect } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
+import * as Linking from 'expo-linking';
 import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../services/supabase';
 
-/**
- * Pantalla intermedia que se muestra cuando Supabase redirige desde el callback.
- * Solo espera a que se procesen los tokens.
- */
 export default function AuthCallbackScreen() {
     const { colors } = useTheme();
 
@@ -15,35 +12,55 @@ export default function AuthCallbackScreen() {
             try {
                 console.log('[AuthCallback] Procesando callback...');
 
-                // Obtener la sesión que Supabase acaba de establecer
-                const { data, error } = await supabase.auth.getSession();
+                // Obtener la URL que abrió esta pantalla
+                const url = await Linking.getInitialURL();
+                console.log('[AuthCallback] URL recibida:', url);
 
-                if (error) {
-                    console.error('[AuthCallback] Error:', error.message);
-                    return;
+                if (url) {
+                    // Extraer tokens del fragmento (#) o query string (?)
+                    const fragment = url.split('#')[1] || url.split('?')[1] || '';
+                    const params = new URLSearchParams(fragment);
+
+                    const accessToken = params.get('access_token');
+                    const refreshToken = params.get('refresh_token');
+
+                    if (accessToken && refreshToken) {
+                        console.log('[AuthCallback] ✅ Tokens encontrados');
+                        const { error } = await supabase.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken,
+                        });
+                        if (error) {
+                            console.error('[AuthCallback] Error setSession:', error.message);
+                        } else {
+                            console.log('[AuthCallback] ✅ Sesión establecida');
+                        }
+                        return;
+                    }
                 }
 
+                // Fallback: intentar getSession por si ya está procesada
+                const { data } = await supabase.auth.getSession();
                 if (data.session) {
-                    console.log('[AuthCallback] ✅ Sesión establecida');
-                    // El onAuthStateChange en AuthContext se dispara automáticamente
-                    // y redirige al usuario a la app principal
+                    console.log('[AuthCallback] ✅ Sesión ya activa');
                 } else {
-                    console.log('[AuthCallback] Esperando sesión...');
+                    console.warn('[AuthCallback] ⚠️ No se encontraron tokens');
                 }
-            } catch (err) {
-                console.error('[AuthCallback]', err);
+            } catch (err: any) {
+                console.error('[AuthCallback] Error:', err.message);
             }
         };
 
-        // Pequeña espera para que Supabase procese completamente
-        const timeout = setTimeout(processCallback, 500);
+        const timeout = setTimeout(processCallback, 300);
         return () => clearTimeout(timeout);
     }, []);
 
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
             <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={{ color: colors.textSecondary, marginTop: 16 }}>Procesando autenticación...</Text>
+            <Text style={{ color: colors.textSecondary, marginTop: 16 }}>
+                Procesando autenticación...
+            </Text>
         </View>
     );
 }
