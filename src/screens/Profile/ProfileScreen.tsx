@@ -1,65 +1,120 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useAuth } from '../../contexts/AuthContext';
-import { UserAvatar } from '../../components/ui/UserAvatar';
-import { SkeletonBox } from '../../components/ui/SkeletonBox';
+import { ProfileScreenSkeleton } from '../../components/ui/SkeletonLoader';
 
-export default function ProfileScreen() {
-    const { colors } = useTheme();
+const COLORS = {
+    background: '#0D0D1A',
+    surface: '#1A1A2E',
+    border: '#2A2A3E',
+    gold: '#C9A84C',
+    white: '#FFFFFF',
+    textSecondary: '#A0A0B0',
+    error: '#FF6B6B',
+};
+
+export default function ProfileScreen({ navigation }: any) {
     const insets = useSafeAreaInsets();
     const { user, loading } = useCurrentUser();
     const { signOut } = useAuth();
 
-    console.log('ProfileScreen State:', { user: user?.email, loading });
+    if (loading) return <ProfileScreenSkeleton />;
 
-    if (loading) return (
-        <View style={{ flex: 1, backgroundColor: colors.background, padding: 20, paddingTop: 60, alignItems: 'center' }}>
-            <SkeletonBox width={80} height={80} borderRadius={40} style={{ marginTop: 20 }} />
-            <SkeletonBox width="50%" height={22} borderRadius={8} style={{ marginTop: 16 }} />
-            <SkeletonBox width="65%" height={16} borderRadius={6} style={{ marginTop: 8 }} />
-        </View>
+    const renderMenuItem = (icon: string, label: string, isDestructive = false, onPress?: () => void) => (
+        <TouchableOpacity
+            style={styles.menuItem}
+            activeOpacity={0.7}
+            onPress={onPress}
+        >
+            <View style={styles.menuItemLeft}>
+                <View style={styles.iconCircle}>
+                    <Feather name={icon as any} size={18} color={isDestructive ? COLORS.error : COLORS.white} />
+                </View>
+                <Text style={[styles.menuLabel, isDestructive && { color: COLORS.error }]}>
+                    {label}
+                </Text>
+            </View>
+            {!isDestructive && <Feather name="chevron-right" size={20} color={COLORS.textSecondary} />}
+        </TouchableOpacity>
     );
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 16 }]}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Mi perfil</Text>
-            <View style={{ alignItems: 'center', paddingVertical: 28 }}>
-                <UserAvatar uri={user?.avatar_url} name={user?.full_name ?? ''} size={80} />
-                <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.full_name}</Text>
-                <Text style={[styles.email, { color: colors.textSecondary }]}>{user?.email}</Text>
-            </View>
-            <View style={{ paddingHorizontal: 20 }}>
-                {[
-                    { icon: 'bell', label: 'Notificaciones' },
-                    { icon: 'shield', label: 'Privacidad' },
-                    { icon: 'info', label: 'Acerca de TurnoSync' },
-                ].map((item, i) => (
-                    <TouchableOpacity key={i} style={[styles.item, { backgroundColor: colors.surface, borderColor: colors.cardBorder }]} activeOpacity={0.7}>
-                        <Feather name={item.icon as any} size={18} color={colors.textSecondary} />
-                        <Text style={[styles.itemLabel, { color: colors.textPrimary }]}>{item.label}</Text>
-                        <Feather name="chevron-right" size={16} color={colors.textMuted} />
-                    </TouchableOpacity>
-                ))}
-                <TouchableOpacity style={[styles.item, { backgroundColor: colors.surface, borderColor: colors.cardBorder }]} activeOpacity={0.7} onPress={() => signOut()}>
-                    <Feather name="log-out" size={18} color={colors.error} />
-                    <Text style={[styles.itemLabel, { color: colors.error }]}>Cerrar sesión</Text>
-                </TouchableOpacity>
-                <Text style={[styles.version, { color: colors.textMuted }]}>TurnoSync v1.0.0</Text>
-            </View>
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Header Profile */}
+                <View style={styles.profileHeader}>
+                    <View style={styles.avatarWrapper}>
+                        {user?.avatar_url ? (
+                            <Image source={{ uri: user.avatar_url }} style={styles.avatarImg} />
+                        ) : (
+                            <View style={styles.initialsCircle}>
+                                <Text style={styles.initialsText}>
+                                    {user?.full_name?.charAt(0) || 'U'}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                    <Text style={styles.name}>{user?.full_name || 'User'}</Text>
+                    <Text style={styles.email}>{user?.email}</Text>
+
+                    <View style={[styles.roleBadge, { backgroundColor: user?.role === 'admin' ? COLORS.gold : '#4A4A5A' }]}>
+                        <Text style={styles.roleText}>
+                            {user?.role === 'admin' ? 'ADMIN' : 'CLIENTE'}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Menu Section */}
+                <View style={styles.menuSection}>
+                    {renderMenuItem('calendar', 'Mis Turnos', false, () => navigation.navigate('MyBookings'))}
+                    {renderMenuItem('bell', 'Notificaciones', false, () => Alert.alert('Próximamente', 'Notificaciones estarán disponibles pronto.'))}
+                    {renderMenuItem('help-circle', 'Ayuda', false, () => Alert.alert('Ayuda', 'Soporte técnico: support@turnosync.com'))}
+                    {renderMenuItem('log-out', 'Cerrar Sesión', true, () => signOut())}
+                </View>
+
+                <Text style={styles.versionText}>TurnoSync v1.1.0</Text>
+            </ScrollView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    title: { fontSize: 26, fontWeight: '800', paddingHorizontal: 20, marginBottom: 8 },
-    name: { fontSize: 20, fontWeight: '700', marginTop: 14 },
-    email: { fontSize: 14, marginTop: 4 },
-    item: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16, borderWidth: 1, marginBottom: 10 },
-    itemLabel: { flex: 1, fontSize: 15 },
-    version: { textAlign: 'center', fontSize: 12, marginTop: 24 },
+    container: { flex: 1, backgroundColor: COLORS.background },
+    profileHeader: { alignItems: 'center', paddingVertical: 40 },
+    avatarWrapper: {
+        width: 84,
+        height: 84,
+        borderRadius: 42,
+        borderWidth: 2,
+        borderColor: COLORS.gold,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+        overflow: 'hidden',
+    },
+    avatarImg: { width: 80, height: 80, borderRadius: 40 },
+    initialsCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: COLORS.gold, justifyContent: 'center', alignItems: 'center' },
+    initialsText: { color: COLORS.background, fontSize: 32, fontWeight: 'bold' },
+    name: { color: COLORS.white, fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
+    email: { color: COLORS.textSecondary, fontSize: 14, marginBottom: 16 },
+    roleBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
+    roleText: { color: COLORS.white, fontSize: 10, fontWeight: 'bold' },
+    menuSection: { paddingHorizontal: 20, marginTop: 10 },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: COLORS.surface,
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
+    },
+    menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
+    iconCircle: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+    menuLabel: { color: COLORS.white, fontSize: 16, fontWeight: '500' },
+    versionText: { textAlign: 'center', color: '#4A4A5A', fontSize: 12, marginVertical: 30 },
 });

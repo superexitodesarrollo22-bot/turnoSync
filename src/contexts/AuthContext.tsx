@@ -10,6 +10,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 interface AuthContextType {
     session: Session | null;
+    profile: any | null;
     loading: boolean;
     signInWithGoogle: () => Promise<{ error: string | null }>;
     signOut: () => Promise<void>;
@@ -19,18 +20,37 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
+    const [profile, setProfile] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const fetchProfile = async (uid: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('supabase_auth_uid', uid)
+                .single();
+            if (data) setProfile(data);
+            if (error) console.error('[AuthContext] Error fetching profile:', error.message);
+        } catch (e) {
+            console.error('[AuthContext] Profile fetch exception:', e);
+        }
+    };
+
     useEffect(() => {
+        // Inicialización
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
+            if (session?.user) fetchProfile(session.user.id);
             setLoading(false);
         });
 
+        // Escucha cambios de auth
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setSession(session);
-            setLoading(false);
-            if (_event === 'SIGNED_IN' && session) {
+
+            if (session?.user) {
+                // Upsert para asegurar que existe en public.users
                 try {
                     await supabase.from('users').upsert({
                         supabase_auth_uid: session.user.id,
@@ -38,10 +58,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         full_name: session.user.user_metadata?.full_name ?? '',
                         avatar_url: session.user.user_metadata?.avatar_url ?? '',
                     }, { onConflict: 'supabase_auth_uid' });
+
+                    await fetchProfile(session.user.id);
                 } catch (e) {
-                    console.log('[AuthContext] upsert error (non blocking):', e);
+                    console.log('[AuthContext] Upsert error (non-blocking):', e);
                 }
+            } else {
+                setProfile(null);
             }
+
+            setLoading(false);
         });
 
         return () => subscription.unsubscribe();
@@ -169,7 +195,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ session, loading, signInWithGoogle, signOut }}>
+        <AuthContext.Provider value={{ session, profile, loading, signInWithGoogle, signOut }}>
             {children}
         </AuthContext.Provider>
     );

@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import AuthCallbackScreen from './src/screens/Auth/AuthCallbackScreen';
+import SplashAnimatedScreen from './src/screens/SplashAnimatedScreen';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Linking from 'expo-linking';
@@ -26,21 +27,21 @@ const linking = {
 
 function RootNavigator() {
   const { session, loading } = useAuth();
+  const [showSplash, setShowSplash] = React.useState(true);
 
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('🎯 Estado de App:');
   console.log('   Loading:', loading);
+  console.log('   Splash:', showSplash ? '✅ Activo' : '❌ Terminó');
   console.log('   Session:', session ? `✅ ${session.user.email}` : '❌ No session');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-  // Estado 1: Cargando autenticación inicial
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.text}>Cargando TurnoSync...</Text>
-      </View>
-    );
+  // Si estamos cargando sesión O mostrando el splash animado por primera vez
+  if (loading || (showSplash && !session)) {
+    // Si no hay sesión, mostramos el splash animado
+    if (!session) {
+      return <SplashAnimatedScreen onFinish={() => setShowSplash(false)} />;
+    }
   }
 
   return (
