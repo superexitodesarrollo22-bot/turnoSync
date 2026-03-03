@@ -1,10 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Image,
+    ScrollView,
+    Modal
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
-import { AppLogo } from '../../components/ui/AppLogo';
 import { useAuth } from '../../contexts/AuthContext';
 import { ProfileScreenSkeleton } from '../../components/ui/SkeletonLoader';
 
@@ -14,6 +21,8 @@ export default function ProfileScreen({ navigation }: any) {
     const { user, loading } = useCurrentUser();
     const { signOut } = useAuth();
 
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+
     if (loading) {
         return (
             <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -22,25 +31,13 @@ export default function ProfileScreen({ navigation }: any) {
         );
     }
 
-    const handleSignOut = () => {
-        Alert.alert(
-            'Cerrar sesión',
-            '¿Estás seguro que deseas cerrar sesión?',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Cerrar sesión',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await signOut();
-                        } catch (error) {
-                            Alert.alert('Error', 'No se pudo cerrar sesión. Intenta de nuevo.');
-                        }
-                    }
-                }
-            ]
-        );
+    const executeSignOut = async () => {
+        setShowLogoutModal(false);
+        try {
+            await signOut();
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+        }
     };
 
     const renderMenuItem = (icon: string, label: string, isDestructive = false, onPress?: () => void) => (
@@ -82,23 +79,17 @@ export default function ProfileScreen({ navigation }: any) {
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
             <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Branding Header */}
-                <View style={styles.brandingHeader}>
-                    <AppLogo size={40} iconSize={18} />
-                    <Text style={[styles.brandingTitle, { color: colors.textPrimary }]}>TurnoSync</Text>
-                </View>
-
                 {/* Header Profile */}
                 <View style={styles.profileHeader}>
                     <View style={[
                         styles.avatarWrapper,
                         {
                             borderColor: colors.accent,
-                            elevation: isDark ? 0 : 3,
+                            elevation: isDark ? 0 : 4,
                             shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 2 },
+                            shadowOffset: { width: 0, height: 4 },
                             shadowOpacity: isDark ? 0 : 0.1,
-                            shadowRadius: 4,
+                            shadowRadius: 8,
                         }
                     ]}>
                         {user?.avatar_url ? (
@@ -111,27 +102,60 @@ export default function ProfileScreen({ navigation }: any) {
                             </View>
                         )}
                     </View>
-                    <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.full_name || 'Usuario'}</Text>
-                    <Text style={[styles.email, { color: colors.textSecondary }]}>{user?.email}</Text>
-
-                    <View style={[styles.roleBadge, { backgroundColor: colors.accent }]}>
-                        <Text style={[styles.roleText, { color: isDark ? colors.background : '#FFFFFF' }]}>
-                            {user?.role === 'admin' ? 'ADMIN' : 'CLIENTE'}
-                        </Text>
-                    </View>
+                    <Text style={[styles.name, { color: 'white' }]}>{user?.full_name || 'Usuario'}</Text>
+                    <Text style={[styles.email, { color: '#A0A0B0' }]}>{user?.email}</Text>
                 </View>
 
                 {/* Menu Section */}
                 <View style={styles.menuSection}>
                     {renderMenuItem('calendar', 'Mis Turnos', false, () => navigation.navigate('MyBookings'))}
-                    {renderMenuItem('bell', 'Notificaciones', false, () => Alert.alert('Próximamente', 'Notificaciones estarán disponibles pronto.'))}
-                    {renderMenuItem('help-circle', 'Ayuda', false, () => Alert.alert('Ayuda', 'Soporte técnico: support@turnosync.com'))}
-                    {renderMenuItem('log-out', 'Cerrar sesión', true, handleSignOut)}
+                    {renderMenuItem('bell', 'Notificaciones', false, () => { })}
+                    {renderMenuItem('help-circle', 'Ayuda', false, () => { })}
+
+                    {/* Unique Logout Button Style */}
+                    <TouchableOpacity
+                        style={styles.logoutBtn}
+                        onPress={() => setShowLogoutModal(true)}
+                        activeOpacity={0.8}
+                    >
+                        <Feather name="log-out" size={20} color="#FF6B6B" />
+                        <Text style={styles.logoutBtnText}>Cerrar sesión</Text>
+                    </TouchableOpacity>
                 </View>
-
-
-                <Text style={[styles.versionText, { color: colors.textMuted }]}>TurnoSync v1.1.0</Text>
             </ScrollView>
+
+            {/* Custom Logout Modal */}
+            <Modal
+                visible={showLogoutModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowLogoutModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Feather name="log-out" size={40} color="#FF6B6B" />
+                        </View>
+
+                        <Text style={styles.modalTitle}>¿Cerrar sesión?</Text>
+                        <Text style={styles.modalSubtitle}>¿Seguro que deseas salir de tu cuenta?</Text>
+
+                        <TouchableOpacity
+                            style={styles.cancelBtn}
+                            onPress={() => setShowLogoutModal(false)}
+                        >
+                            <Text style={styles.cancelBtnText}>Cancelar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.confirmBtn}
+                            onPress={executeSignOut}
+                        >
+                            <Text style={styles.confirmBtnText}>Sí, cerrar sesión</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -143,19 +167,16 @@ const styles = StyleSheet.create({
         width: 84,
         height: 84,
         borderRadius: 42,
-        borderWidth: 2,
+        borderWidth: 3,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 16,
         overflow: 'hidden',
     },
-    avatarImg: { width: 80, height: 80, borderRadius: 40 },
-    initialsCircle: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center' },
+    avatarImg: { width: '100%', height: '100%' },
+    initialsCircle: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     initialsText: { fontSize: 32, fontWeight: 'bold' },
-    name: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
-    email: { fontSize: 14, marginBottom: 16 },
-    roleBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
-    roleText: { fontSize: 10, fontWeight: 'bold' },
+    name: { fontSize: 22, fontWeight: 'bold', marginTop: 12, textAlign: 'center' },
+    email: { fontSize: 14, marginTop: 4, textAlign: 'center' },
     menuSection: { marginTop: 10 },
     menuItem: {
         flexDirection: 'row',
@@ -167,17 +188,79 @@ const styles = StyleSheet.create({
     menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
     iconCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
     menuLabel: { fontSize: 16, fontWeight: '500' },
-    versionText: { textAlign: 'center', fontSize: 12, marginVertical: 30 },
-    brandingHeader: {
+    logoutBtn: {
+        marginHorizontal: 20,
+        marginTop: 24,
+        marginBottom: 16,
+        backgroundColor: 'rgba(255,107,107,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,107,107,0.3)',
+        borderRadius: 14,
+        height: 56,
         flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        gap: 12,
+        gap: 10,
     },
-    brandingTitle: {
-        fontSize: 18,
+    logoutBtnText: {
+        color: '#FF6B6B',
+        fontSize: 16,
         fontWeight: 'bold',
-        letterSpacing: 1,
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#1A1A2E',
+        borderRadius: 24,
+        marginHorizontal: 32,
+        padding: 28,
+        alignItems: 'center',
+        width: '85%',
+    },
+    modalIconContainer: {
+        marginBottom: 16,
+    },
+    modalTitle: {
+        color: 'white',
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    modalSubtitle: {
+        color: '#A0A0B0',
+        fontSize: 14,
+        textAlign: 'center',
+        marginTop: 8,
+        marginBottom: 28,
+    },
+    cancelBtn: {
+        backgroundColor: '#252538',
+        borderRadius: 12,
+        height: 48,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+        width: '100%',
+    },
+    cancelBtnText: {
+        color: 'white',
+        fontSize: 16,
+    },
+    confirmBtn: {
+        backgroundColor: '#FF6B6B',
+        borderRadius: 12,
+        height: 48,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+    },
+    confirmBtnText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
