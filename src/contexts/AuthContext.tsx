@@ -50,18 +50,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSession(session);
 
             if (session?.user) {
-                // Upsert para asegurar que existe en public.users
                 try {
-                    await supabase.from('users').upsert({
-                        supabase_auth_uid: session.user.id,
-                        email: session.user.email ?? '',
-                        full_name: session.user.user_metadata?.full_name ?? '',
-                        avatar_url: session.user.user_metadata?.avatar_url ?? '',
-                    }, { onConflict: 'supabase_auth_uid' });
+                    const fullName = session.user.user_metadata?.full_name
+                        || session.user.user_metadata?.name
+                        || '';
+                    const avatarUrl = session.user.user_metadata?.avatar_url
+                        || session.user.user_metadata?.picture
+                        || '';
+
+                    console.log('[AuthContext] Metadata de Google:', {
+                        full_name: fullName,
+                        avatar_url: avatarUrl,
+                        raw: session.user.user_metadata
+                    });
+
+                    const { error: upsertError } = await supabase
+                        .from('users')
+                        .upsert({
+                            supabase_auth_uid: session.user.id,
+                            email: session.user.email ?? '',
+                            full_name: fullName,
+                            avatar_url: avatarUrl,
+                        }, {
+                            onConflict: 'supabase_auth_uid',
+                            ignoreDuplicates: false
+                        });
+
+                    if (upsertError) {
+                        console.error('[AuthContext] Error en upsert:', upsertError.message);
+                    }
 
                     await fetchProfile(session.user.id);
                 } catch (e) {
-                    console.log('[AuthContext] Upsert error (non-blocking):', e);
+                    console.error('[AuthContext] Excepción en upsert/fetchProfile:', e);
                 }
             } else {
                 setProfile(null);
@@ -190,6 +211,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signOut = async () => {
         console.log('[Auth] Cerrando sesión...');
+        setSession(null);
+        setProfile(null);
         await supabase.auth.signOut();
         console.log('[Auth] ✅ Sesión cerrada');
     };

@@ -16,13 +16,12 @@ import { useTheme } from '../../hooks/useTheme';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useBusinesses } from '../../hooks/useBusinesses';
 import { HomeScreenSkeleton } from '../../components/ui/SkeletonLoader';
-import { UserAvatar } from '../../components/ui/UserAvatar';
 
 export default function HomeScreen({ navigation }: any) {
     const insets = useSafeAreaInsets();
     const { colors, isDark } = useTheme();
     const [searchQuery, setSearchQuery] = useState('');
-    const { businesses, loading: bizLoading } = useBusinesses(searchQuery);
+    const { businesses, loading: bizLoading, error: bizError } = useBusinesses(searchQuery);
     const { user, loading: userLoading } = useCurrentUser();
 
     if (userLoading) {
@@ -33,8 +32,6 @@ export default function HomeScreen({ navigation }: any) {
         );
     }
 
-    const firstName = user?.full_name?.split(' ')[0] ?? 'Usuario';
-
     const renderBusinessCard = ({ item }: { item: any }) => (
         <TouchableOpacity
             style={[
@@ -42,7 +39,6 @@ export default function HomeScreen({ navigation }: any) {
                 {
                     backgroundColor: colors.surface,
                     borderColor: colors.border,
-                    // sombra solo en light mode:
                     shadowColor: isDark ? 'transparent' : '#000',
                     elevation: isDark ? 0 : 3,
                 }
@@ -110,31 +106,34 @@ export default function HomeScreen({ navigation }: any) {
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
                 <View style={styles.headerLeft}>
-                    <UserAvatar
-                        uri={user?.avatar_url}
-                        name={user?.full_name}
-                        size={44}
-                    />
-                    <View>
-                        <Text style={[styles.welcomeText, { color: colors.textSecondary }]}>Hola,</Text>
-                        <Text style={[styles.userName, { color: colors.textPrimary }]}>
-                            {firstName}
+                    {user?.avatar_url ? (
+                        <Image
+                            source={{ uri: user.avatar_url }}
+                            style={styles.avatar}
+                        />
+                    ) : (
+                        <View style={[styles.avatarFallback, { backgroundColor: colors.accent }]}>
+                            <Text style={[styles.avatarInitial, { color: isDark ? '#0D0D1A' : '#FFFFFF' }]}>
+                                {(user?.full_name ?? 'U').charAt(0).toUpperCase()}
+                            </Text>
+                        </View>
+                    )}
+                    <View style={styles.headerTextCol}>
+                        <Text style={[styles.welcomeText, { color: colors.textSecondary }]}>
+                            Bienvenido
+                        </Text>
+                        <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>
+                            {user?.full_name?.split(' ')[0] ?? 'Usuario'} 👋
                         </Text>
                     </View>
                 </View>
-                <TouchableOpacity style={[styles.bellBtn, { backgroundColor: colors.surfaceElevated }]} activeOpacity={0.7}>
-                    <Feather name="bell" size={20} color={colors.textPrimary} />
+                <TouchableOpacity style={[styles.bellBtn, { backgroundColor: isDark ? '#1A1A2E' : '#F0EDE8' }]}>
+                    <Feather name="bell" size={20} color={colors.accent} />
                 </TouchableOpacity>
             </View>
 
             {/* Search Bar */}
-            <View style={[
-                styles.searchBar,
-                {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                }
-            ]}>
+            <View style={[styles.searchBar, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
                 <Feather name="search" size={18} color={colors.textMuted} style={{ marginRight: 10 }} />
                 <TextInput
                     style={[styles.searchInput, { color: colors.textPrimary }]}
@@ -156,12 +155,19 @@ export default function HomeScreen({ navigation }: any) {
                 <Text style={[styles.sectionCount, { color: colors.textSecondary }]}>({businesses.length})</Text>
             </View>
 
+            {/* Error Message */}
+            {bizError && (
+                <Text style={{ color: colors.error, textAlign: 'center', padding: 20 }}>
+                    Error cargando barberías: {bizError}
+                </Text>
+            )}
+
             {/* List */}
             {bizLoading && businesses.length === 0 ? (
                 <View style={styles.centered}>
                     <ActivityIndicator color={colors.accent} size="large" />
                 </View>
-            ) : businesses.length === 0 ? (
+            ) : businesses.length === 0 && !bizLoading ? (
                 <View style={[styles.centered, { paddingTop: 60 }]}>
                     <Feather name="search" size={52} color={colors.accent} style={{ opacity: 0.4, marginBottom: 16 }} />
                     <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Sin resultados</Text>
@@ -194,7 +200,28 @@ const styles = StyleSheet.create({
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        flex: 1,
+    },
+    headerTextCol: {
+        flex: 1,
+    },
+    avatar: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        marginRight: 12,
+    },
+    avatarFallback: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        marginRight: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarInitial: {
+        fontSize: 18,
+        fontWeight: 'bold',
     },
     welcomeText: {
         fontSize: 13,

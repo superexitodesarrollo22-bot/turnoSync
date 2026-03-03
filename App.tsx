@@ -27,21 +27,18 @@ const linking = {
 
 function RootNavigator() {
   const { session, loading } = useAuth();
-  const [showSplash, setShowSplash] = React.useState(true);
+  const [splashDone, setSplashDone] = React.useState(false);
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🎯 Estado de App:');
-  console.log('   Loading:', loading);
-  console.log('   Splash:', showSplash ? '✅ Activo' : '❌ Terminó');
-  console.log('   Session:', session ? `✅ ${session.user.email}` : '❌ No session');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#C9A84C" />
+      </View>
+    );
+  }
 
-  // Si estamos cargando sesión O mostrando el splash animado por primera vez
-  if (loading || (showSplash && !session)) {
-    // Si no hay sesión, mostramos el splash animado
-    if (!session) {
-      return <SplashAnimatedScreen onFinish={() => setShowSplash(false)} />;
-    }
+  if (!session && !splashDone) {
+    return <SplashAnimatedScreen onFinish={() => setSplashDone(true)} />;
   }
 
   return (
@@ -51,7 +48,6 @@ function RootNavigator() {
       ) : (
         <Stack.Screen name="Auth" component={AuthNavigator} />
       )}
-      {/* Pantalla de callback siempre accesible por deep linking */}
       <Stack.Screen
         name="AuthCallback"
         component={AuthCallbackScreen}
