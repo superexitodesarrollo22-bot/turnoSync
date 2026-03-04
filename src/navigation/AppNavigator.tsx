@@ -3,12 +3,12 @@ import { View, Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import BusinessDetailScreen from '../screens/Business/BusinessDetailScreen';
-import BookingSelectServiceScreen from '../screens/booking/BookingSelectServiceScreen';
-import BookingSelectStaffScreen from '../screens/booking/BookingSelectStaffScreen';
-import BookingSelectDateScreen from '../screens/booking/BookingSelectDateScreen';
-import BookingSelectSlotScreen from '../screens/booking/BookingSelectSlotScreen';
-import BookingConfirmScreen from '../screens/booking/BookingConfirmScreen';
-import BookingSuccessScreen from '../screens/booking/BookingSuccessScreen';
+import BookingSelectServiceScreen from '../screens/Booking/BookingSelectServiceScreen';
+import BookingSelectStaffScreen from '../screens/Booking/BookingSelectStaffScreen';
+import BookingSelectDateScreen from '../screens/Booking/BookingSelectDateScreen';
+import BookingSelectSlotScreen from '../screens/Booking/BookingSelectSlotScreen';
+import BookingConfirmScreen from '../screens/Booking/BookingConfirmScreen';
+import BookingSuccessScreen from '../screens/Booking/BookingSuccessScreen';
 import AppointmentDetailScreen from '../screens/appointments/AppointmentDetailScreen';
 
 const Stack = createNativeStackNavigator();
