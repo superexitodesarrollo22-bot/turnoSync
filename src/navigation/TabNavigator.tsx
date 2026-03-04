@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import HomeScreen from '../screens/Home/HomeScreen';
-import MyBookingsScreen from '../screens/MyBookings/MyBookingsScreen';
+import MyAppointmentsScreen from '../screens/appointments/MyAppointmentsScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -63,7 +63,7 @@ export default function TabNavigator() {
             })}
         >
             <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Inicio' }} />
-            <Tab.Screen name="MyBookings" component={MyBookingsScreen} options={{ tabBarLabel: 'Turnos' }} />
+            <Tab.Screen name="MyBookings" component={MyAppointmentsScreen} options={{ tabBarLabel: 'Turnos' }} />
             <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />
         </Tab.Navigator>
     );

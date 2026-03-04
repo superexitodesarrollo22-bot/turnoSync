@@ -1,56 +1,76 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 
-export const useAvailableSlots = (businessId: string, date: string) => {
-    const [slots, setSlots] = useState<string[]>([]);
+interface UseAvailableSlotsParams {
+    businessId: string;
+    date: string;
+    serviceId: string;
+    staffId: string | null;
+}
+
+export const useAvailableSlots = ({ businessId, date, serviceId, staffId }: UseAvailableSlotsParams) => {
+    const [slots, setSlots] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchSlots = async () => {
+        if (!businessId || !date || !serviceId) return;
+
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error: rpcError } = await supabase.rpc('get_available_slots', {
+                p_business_id: businessId,
+                p_date: date,
+                p_service_id: serviceId,
+                p_staff_id: staffId,
+            });
+
+            if (rpcError) throw rpcError;
+
+            // Agrupar por staff_id
+            const groupedStaff = data.reduce((acc: any, slot: any) => {
+                const existingStaff = acc.find((s: any) => s.staffId === slot.staff_id);
+                if (existingStaff) {
+                    existingStaff.slots.push({
+                        slot_start: slot.slot_start,
+                        slot_end: slot.slot_end,
+                        label: new Date(slot.slot_start).toLocaleTimeString('es-AR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        })
+                    });
+                } else {
+                    acc.push({
+                        staffId: slot.staff_id,
+                        staffName: slot.staff_name,
+                        slots: [{
+                            slot_start: slot.slot_start,
+                            slot_end: slot.slot_end,
+                            label: new Date(slot.slot_start).toLocaleTimeString('es-AR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                            })
+                        }]
+                    });
+                }
+                return acc;
+            }, []);
+
+            setSlots(groupedStaff);
+        } catch (e: any) {
+            console.error('[useAvailableSlots] Error:', e);
+            setError(e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (!date) return;
-        const fetch = async () => {
-            setLoading(true);
-            try {
-                const dayOfWeek = new Date(date).getDay();
+        fetchSlots();
+    }, [businessId, date, serviceId, staffId]);
 
-                const [{ data: schedule, error: e1 }, { data: appointments, error: e2 }, { data: blackout, error: e3 }] = await Promise.all([
-                    supabase.from('schedules').select('*').eq('business_id', businessId).eq('weekday', dayOfWeek).single(),
-                    supabase.from('appointments').select('start_at, end_at').eq('business_id', businessId).gte('start_at', `${date}T00:00:00`).lte('start_at', `${date}T23:59:59`).not('status', 'in', '(cancelled)'),
-                    supabase.from('blackout_dates').select('date').eq('business_id', businessId).eq('date', date),
-                ]);
-
-                if (e1 || e2 || e3) throw e1 || e2 || e3;
-
-                if (!schedule || (blackout && blackout.length > 0)) { setSlots([]); return; }
-
-                const duration = 30;
-                const start = schedule.start_time;
-                const end = schedule.end_time;
-                const takenSlots = (appointments ?? []).map((a: any) => a.start_at.substring(11, 16));
-
-                const generated: string[] = [];
-                let [h, m] = start.split(':').map(Number);
-                const [eh, em] = end.split(':').map(Number);
-
-                while (h * 60 + m + duration <= eh * 60 + em) {
-                    const slotTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                    const slotDateTime = new Date(`${date}T${slotTime}:00`);
-                    if (slotDateTime > new Date() && !takenSlots.includes(slotTime)) {
-                        generated.push(slotTime);
-                    }
-                    m += duration;
-                    if (m >= 60) { h += Math.floor(m / 60); m = m % 60; }
-                }
-
-                setSlots(generated);
-            } catch (err) {
-                console.error('[useAvailableSlots] Error fetching slots:', err);
-                setSlots([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetch();
-    }, [businessId, date]);
-
-    return { slots, loading };
+    return { slots, loading, error, refetch: fetchSlots };
 };

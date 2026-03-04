@@ -15,25 +15,18 @@ const SkeletonItem = ({ style }: { style: any }) => {
 
     useEffect(() => {
         opacity.value = withRepeat(
-            withTiming(0.7, {
-                duration: 800,
-                easing: Easing.inOut(Easing.ease)
-            }),
+            withTiming(0.7, { duration: 800, easing: Easing.inOut(Easing.ease) }),
             -1,
             true
         );
     }, []);
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-    }));
-
+    const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
     return <Animated.View style={[styles.skeletonBase, style, animatedStyle]} />;
 };
 
 export const HomeScreenSkeleton = () => (
     <View style={styles.container}>
-        {/* Header Skeleton */}
         <View style={styles.header}>
             <View style={styles.headerLeft}>
                 <SkeletonItem style={styles.avatar46} />
@@ -44,14 +37,8 @@ export const HomeScreenSkeleton = () => (
             </View>
             <SkeletonItem style={styles.bellCircle} />
         </View>
-
-        {/* Search Bar Skeleton */}
         <SkeletonItem style={styles.searchBar} />
-
-        {/* Section Title Skeleton */}
         <SkeletonItem style={styles.sectionTitle} />
-
-        {/* Cards Skeleton */}
         {[1, 2, 3].map((i) => (
             <SkeletonItem key={i} style={styles.cardLarge} />
         ))}
@@ -60,30 +47,24 @@ export const HomeScreenSkeleton = () => (
 
 export const BookingsScreenSkeleton = ({ paddingTop = 0 }: { paddingTop?: number }) => (
     <View style={[styles.container, { paddingTop: paddingTop + 16 }]}>
-        {/* Header Skeleton */}
-        <SkeletonItem style={styles.screenTitleSkeleton} />
-        <SkeletonItem style={styles.screenSubtitleSkeleton} />
+        <SkeletonItem style={{ width: 160, height: 28, borderRadius: 6, marginBottom: 8 }} />
+        <SkeletonItem style={{ width: 90, height: 14, borderRadius: 4, marginBottom: 24 }} />
 
-        {/* Tabs Skeleton */}
-        <View style={styles.tabsSkeletonContainer}>
-            <SkeletonItem style={styles.tabPillSkeleton} />
-            <SkeletonItem style={styles.tabPillSkeleton} />
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+            <SkeletonItem style={{ flex: 1, height: 40, borderRadius: 14 }} />
+            <SkeletonItem style={{ flex: 1, height: 40, borderRadius: 14 }} />
         </View>
 
-        {/* Booking Cards Skeleton */}
         {[1, 2, 3].map((i) => (
-            <View key={i} style={styles.bookingCardRealistic}>
-                {/* Left strip */}
-                <SkeletonItem style={styles.statusStripSkeleton} />
-                <View style={styles.bookingCardContentRealistic}>
-                    {/* Icon circle */}
-                    <SkeletonItem style={styles.iconCircleSkeleton} />
-                    <View style={styles.bookingDetailsRealistic}>
-                        <SkeletonItem style={styles.lineFull} />
-                        <SkeletonItem style={styles.line70} />
-                        <SkeletonItem style={styles.line40} />
-                    </View>
+            <View key={i} style={styles.skeletonCard}>
+                <SkeletonItem style={{ width: 4, height: '100%', borderRadius: 4, marginRight: 12 }} />
+                <SkeletonItem style={{ width: 44, height: 44, borderRadius: 22, marginRight: 14 }} />
+                <View style={{ flex: 1, gap: 8 }}>
+                    <SkeletonItem style={{ width: '70%', height: 16, borderRadius: 4 }} />
+                    <SkeletonItem style={{ width: '50%', height: 13, borderRadius: 4 }} />
+                    <SkeletonItem style={{ width: '40%', height: 13, borderRadius: 4 }} />
                 </View>
+                <SkeletonItem style={{ width: 48, height: 16, borderRadius: 4, marginLeft: 8 }} />
             </View>
         ))}
     </View>
@@ -102,7 +83,6 @@ export const ProfileScreenSkeleton = () => (
     </View>
 );
 
-// Provided for compatibility
 export const ServicesScreenSkeleton = () => (
     <View style={styles.container}>
         <SkeletonItem style={styles.sectionTitle} />
@@ -115,18 +95,10 @@ export const ServicesScreenSkeleton = () => (
 );
 
 const styles = StyleSheet.create({
-    skeletonBase: {
-        backgroundColor: '#1A1A2E',
-    },
+    skeletonBase: { backgroundColor: '#1A1A2E' },
     container: { flex: 1, padding: 20 },
     containerCentered: { flex: 1, padding: 20, alignItems: 'center' },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
-        marginTop: 20
-    },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 20 },
     headerLeft: { flexDirection: 'row', alignItems: 'center' },
     avatar46: { width: 46, height: 46, borderRadius: 23, marginRight: 12 },
     headerTextCol: { gap: 6 },
@@ -136,36 +108,17 @@ const styles = StyleSheet.create({
     searchBar: { width: '100%', height: 52, borderRadius: 14, marginBottom: 25 },
     sectionTitle: { width: 150, height: 20, borderRadius: 4, marginBottom: 20 },
     cardLarge: { width: '100%', height: 280, borderRadius: 16, marginBottom: 16 },
-
-    // Realistic Bookings Skeleton
-    screenTitleSkeleton: { width: 180, height: 32, borderRadius: 6, marginBottom: 8 },
-    screenSubtitleSkeleton: { width: 100, height: 16, borderRadius: 4, marginBottom: 24 },
-    tabsSkeletonContainer: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-    tabPillSkeleton: { flex: 1, height: 44, borderRadius: 14 },
-    bookingCardRealistic: {
-        flexDirection: 'row',
-        height: 100,
-        width: '100%',
-        backgroundColor: '#1A1A2E',
-        borderRadius: 18,
-        marginBottom: 12,
-        overflow: 'hidden',
-        alignItems: 'stretch'
-    },
-    statusStripSkeleton: { width: 4, height: '100%' },
-    bookingCardContentRealistic: {
-        flex: 1,
+    skeletonCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16
+        height: 90,
+        width: '100%',
+        backgroundColor: '#1A1A2E',
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 12,
+        overflow: 'hidden',
     },
-    iconCircleSkeleton: { width: 44, height: 44, borderRadius: 22 },
-    bookingDetailsRealistic: { flex: 1, marginLeft: 16, gap: 8 },
-
-    lineFull: { width: '100%', height: 14, borderRadius: 4 },
-    line70: { width: '70%', height: 12, borderRadius: 4 },
-    line40: { width: '40%', height: 12, borderRadius: 4 },
-
     bigAvatar80: { width: 80, height: 80, borderRadius: 40, marginBottom: 16, marginTop: 40 },
     line150: { width: 150, height: 20, borderRadius: 4, marginBottom: 8 },
     line100: { width: 100, height: 14, borderRadius: 4, marginBottom: 30 },

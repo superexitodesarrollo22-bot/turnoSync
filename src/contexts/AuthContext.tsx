@@ -30,7 +30,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 .select('*')
                 .eq('supabase_auth_uid', uid)
                 .single();
-            if (data) setProfile(data);
+            if (data) {
+                const currentSession = (await supabase.auth.getSession()).data.session;
+                const fullName = currentSession?.user?.user_metadata?.full_name
+                    || currentSession?.user?.user_metadata?.name
+                    || data.full_name
+                    || '';
+                const avatarUrl = currentSession?.user?.user_metadata?.avatar_url
+                    || currentSession?.user?.user_metadata?.picture
+                    || data.avatar_url
+                    || '';
+                setProfile({ ...data, full_name: fullName, avatar_url: avatarUrl });
+            }
             if (error) console.error('[AuthContext] Error fetching profile:', error.message);
         } catch (e) {
             console.error('[AuthContext] Profile fetch exception:', e);
@@ -50,20 +61,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSession(session);
 
             if (session?.user) {
+                const fullName = session.user.user_metadata?.full_name
+                    || session.user.user_metadata?.name
+                    || '';
+                const avatarUrl = session.user.user_metadata?.avatar_url
+                    || session.user.user_metadata?.picture
+                    || '';
+
+                console.log('[AuthContext] Metadata de Google:', {
+                    full_name: fullName,
+                    avatar_url: avatarUrl,
+                    raw: session.user.user_metadata
+                });
+
+                // Setear perfil INMEDIATAMENTE desde los metadatos de la sesión
+                // para que la UI muestre los datos sin esperar la DB
+                setProfile(prev => ({
+                    ...(prev ?? {}),
+                    supabase_auth_uid: session.user.id,
+                    email: session.user.email ?? '',
+                    full_name: fullName,
+                    avatar_url: avatarUrl,
+                }));
+
+                // En paralelo, sincronizar con la DB y luego reemplazar el perfil
+                // con el registro completo que incluye el campo id de la tabla users
                 try {
-                    const fullName = session.user.user_metadata?.full_name
-                        || session.user.user_metadata?.name
-                        || '';
-                    const avatarUrl = session.user.user_metadata?.avatar_url
-                        || session.user.user_metadata?.picture
-                        || '';
-
-                    console.log('[AuthContext] Metadata de Google:', {
-                        full_name: fullName,
-                        avatar_url: avatarUrl,
-                        raw: session.user.user_metadata
-                    });
-
                     const { error: upsertError } = await supabase
                         .from('users')
                         .upsert({
@@ -80,9 +103,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         console.error('[AuthContext] Error en upsert:', upsertError.message);
                     }
 
-                    await fetchProfile(session.user.id);
+                    // Fetch del registro completo para tener el campo id (UUID interno)
+                    const { data: dbProfile, error: fetchError } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('supabase_auth_uid', session.user.id)
+                        .single();
+
+                    if (dbProfile) {
+                        // Siempre forzar los valores de Google por sobre lo que haya en la DB
+                        // por si la DB tenía valores vacíos de un login anterior
+                        setProfile({
+                            ...dbProfile,
+                            full_name: fullName || dbProfile.full_name,
+                            avatar_url: avatarUrl || dbProfile.avatar_url,
+                        });
+                        console.log('[AuthContext] Perfil final:', {
+                            full_name: fullName || dbProfile.full_name,
+                            avatar_url: avatarUrl || dbProfile.avatar_url,
+                        });
+                    } else if (fetchError) {
+                        console.error('[AuthContext] Error al leer perfil de DB:', fetchError.message);
+                        // El perfil ya fue seteado desde metadata arriba, no hacer nada
+                    }
+
                 } catch (e) {
-                    console.error('[AuthContext] Excepción en upsert/fetchProfile:', e);
+                    console.error('[AuthContext] Excepcion en upsert/fetchProfile:', e);
+                    // El perfil ya fue seteado desde metadata arriba, la UI igual funciona
                 }
             } else {
                 setProfile(null);
