@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
+import { registerClientPushToken } from '../utils/notifications';
 
 // 🔴 CRÍTICO: Esto debe estar aquí, no en supabase.ts
 WebBrowser.maybeCompleteAuthSession();
@@ -122,6 +123,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             full_name: fullName || dbProfile.full_name,
                             avatar_url: avatarUrl || dbProfile.avatar_url,
                         });
+
+                        // Registrar token push usando el id interno de la tabla users
+                        registerClientPushToken(dbProfile.id).catch((err) =>
+                            console.log('[Push] No se pudo registrar token:', err)
+                        );
                     } else if (fetchError) {
                         console.error('[AuthContext] Error al leer perfil de DB:', fetchError.message);
                         // El perfil ya fue seteado desde metadata arriba, no hacer nada

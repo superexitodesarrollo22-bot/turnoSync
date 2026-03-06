@@ -1,28 +1,21 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
-    withRepeat,
-    Easing
-} from 'react-native-reanimated';
+import React from 'react';
+import { View, StyleSheet, Dimensions, Animated } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 const SkeletonItem = ({ style }: { style: any }) => {
-    const opacity = useSharedValue(0.3);
+    const opacity = React.useRef(new Animated.Value(0.3)).current;
 
-    useEffect(() => {
-        opacity.value = withRepeat(
-            withTiming(0.7, { duration: 800, easing: Easing.inOut(Easing.ease) }),
-            -1,
-            true
-        );
+    React.useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+                Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+            ])
+        ).start();
     }, []);
 
-    const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
-    return <Animated.View style={[styles.skeletonBase, style, animatedStyle]} />;
+    return <Animated.View style={[styles.skeletonBase, style, { opacity }]} />;
 };
 
 export const HomeScreenSkeleton = () => (

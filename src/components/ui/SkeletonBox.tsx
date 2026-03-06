@@ -1,13 +1,32 @@
-import React, { useEffect } from 'react';
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { Animated } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
 export const SkeletonBox = ({ width, height, borderRadius = 8, style }: any) => {
     const { colors } = useTheme();
-    const opacity = useSharedValue(0.3);
+    const opacity = useRef(new Animated.Value(0.3)).current;
+
     useEffect(() => {
-        opacity.value = withRepeat(withTiming(0.9, { duration: 800, easing: Easing.inOut(Easing.ease) }), -1, true);
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(opacity, { toValue: 0.9, duration: 800, useNativeDriver: true }),
+                Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+            ])
+        ).start();
     }, []);
-    const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
-    return <Animated.View style={[{ width, height, borderRadius, backgroundColor: colors.surfaceElevated }, animStyle, style]} />;
+
+    return (
+        <Animated.View
+            style={[
+                {
+                    width,
+                    height,
+                    borderRadius,
+                    backgroundColor: colors.surfaceElevated,
+                    opacity,
+                },
+                style,
+            ]}
+        />
+    );
 };
