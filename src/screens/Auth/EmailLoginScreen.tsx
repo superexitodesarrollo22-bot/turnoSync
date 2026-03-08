@@ -16,11 +16,13 @@ import { supabase } from '../../services/supabase';
 import { useTheme } from '../../hooks/useTheme';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useToast } from '../../hooks/useToast';
 import { StatusBar } from 'expo-status-bar';
 
 export default function EmailLoginScreen() {
     const navigation = useNavigation<any>();
     const { colors, isDark } = useTheme();
+    const { showToast } = useToast();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -63,10 +65,10 @@ export default function EmailLoginScreen() {
             setIsLoading(true);
             const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) {
-                Alert.alert('Login Error', error.message);
+                showToast({ type: 'error', message: error.message });
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Check your credentials');
+            showToast({ type: 'error', message: error.message || 'Check your credentials' });
         } finally {
             setIsLoading(false);
         }
@@ -74,19 +76,19 @@ export default function EmailLoginScreen() {
 
     const handleForgotPassword = async () => {
         if (!email || !validateEmail(email)) {
-            Alert.alert('Input Required', 'Please enter a valid email address first.');
+            showToast({ type: 'warning', message: 'Please enter a valid email address first.' });
             return;
         }
 
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(email);
             if (error) {
-                Alert.alert('Error', error.message);
+                showToast({ type: 'error', message: error.message });
             } else {
-                Alert.alert('Success', 'Check your email for the reset link.');
+                showToast({ type: 'success', message: 'Check your email for the reset link.' });
             }
         } catch (err) {
-            Alert.alert('Error', 'Failed to send reset link.');
+            showToast({ type: 'error', message: 'Failed to send reset link.' });
         }
     };
 

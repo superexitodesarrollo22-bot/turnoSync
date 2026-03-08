@@ -15,7 +15,12 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useBusinesses } from '../../hooks/useBusinesses';
-import { HomeScreenSkeleton } from '../../components/ui/SkeletonLoader';
+import { HomeScreenSkeleton, BusinessCardSkeleton } from '../../components/ui/SkeletonLoader';
+import { EmptyState } from '../../components/ui/EmptyState';
+import AnimatedPressable from '../../components/ui/AnimatedPressable';
+import FadeInView from '../../components/ui/FadeInView';
+import { PremiumCard } from '../../components/ui/PremiumCard';
+import { GradientButton } from '../../components/ui/GradientButton';
 
 export default function HomeScreen({ navigation }: any) {
     const insets = useSafeAreaInsets();
@@ -32,71 +37,56 @@ export default function HomeScreen({ navigation }: any) {
         );
     }
 
-    const renderBusinessCard = ({ item }: { item: any }) => (
-        <TouchableOpacity
-            style={[
-                styles.card,
-                {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    shadowColor: isDark ? 'transparent' : '#000',
-                    elevation: isDark ? 0 : 3,
-                }
-            ]}
-            onPress={() => navigation.navigate('BusinessProfile', { businessId: item.id })}
-        >
-            {/* Área de imagen/logo */}
-            <View style={[styles.cardImageArea, { backgroundColor: colors.surfaceElevated }]}>
-                {item.logo_url
-                    ? <Image source={{ uri: item.logo_url }} style={styles.cardImage} resizeMode="cover" />
-                    : <Feather name="scissors" size={32} color={colors.accent} />
-                }
-                <View style={[styles.statusBadge, { backgroundColor: '#4CAF50' }]}>
-                    <Text style={styles.statusText}>Abierto</Text>
-                </View>
-            </View>
-
-            {/* Cuerpo */}
-            <View style={styles.cardBody}>
-                <Text style={[styles.businessName, { color: colors.textPrimary }]}>
-                    {item.name}
-                </Text>
-
-                {item.description ? (
-                    <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
-                        {item.description}
-                    </Text>
-                ) : null}
-
-                {item.address ? (
-                    <View style={styles.infoRow}>
-                        <Feather name="map-pin" size={13} color={colors.accent} style={styles.infoIcon} />
-                        <Text style={[styles.infoText, { color: colors.textSecondary }]} numberOfLines={1}>
-                            {item.address}
-                        </Text>
+    const renderBusinessCard = ({ item, index }: { item: any, index: number }) => (
+        <FadeInView delay={index * 60}>
+            <AnimatedPressable
+                onPress={() => navigation.navigate('BusinessProfile', { businessId: item.id })}
+                style={{ marginBottom: 16 }}
+            >
+                <PremiumCard elevated style={{ overflow: 'hidden', padding: 0 }}>
+                    {/* Área de imagen/logo */}
+                    <View style={[styles.cardImageArea, { backgroundColor: colors.surfaceElevated }]}>
+                        {item.logo_url
+                            ? <Image source={{ uri: item.logo_url }} style={styles.cardImage} resizeMode="cover" />
+                            : <Feather name="scissors" size={32} color={colors.accent} />
+                        }
+                        <View style={[styles.statusBadge, { backgroundColor: '#4CAF50' }]}>
+                            <Text style={styles.statusText}>Abierto</Text>
+                        </View>
                     </View>
-                ) : null}
 
-                {item.phone ? (
-                    <View style={styles.infoRow}>
-                        <Feather name="phone" size={13} color={colors.accent} style={styles.infoIcon} />
-                        <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-                            {item.phone}
+                    {/* Cuerpo */}
+                    <View style={styles.cardBody}>
+                        <Text style={[styles.businessName, { color: colors.textPrimary }]}>
+                            {item.name}
                         </Text>
-                    </View>
-                ) : null}
 
-                {/* Botón reservar */}
-                <TouchableOpacity
-                    style={[styles.reserveBtn, { backgroundColor: colors.accent }]}
-                    onPress={() => navigation.navigate('BusinessProfile', { businessId: item.id })}
-                >
-                    <Text style={[styles.reserveBtnText, { color: isDark ? '#0D0D1A' : '#FFFFFF' }]}>
-                        Reservar turno
-                    </Text>
-                </TouchableOpacity>
-            </View>
-        </TouchableOpacity>
+                        {item.description ? (
+                            <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
+                                {item.description}
+                            </Text>
+                        ) : null}
+
+                        {item.address ? (
+                            <View style={styles.infoRow}>
+                                <Feather name="map-pin" size={13} color={colors.accent} style={styles.infoIcon} />
+                                <Text style={[styles.infoText, { color: colors.textSecondary }]} numberOfLines={1}>
+                                    {item.address}
+                                </Text>
+                            </View>
+                        ) : null}
+
+                        {/* Botón reservar */}
+                        <GradientButton
+                            label="Reservar turno"
+                            onPress={() => navigation.navigate('BusinessProfile', { businessId: item.id })}
+                            size="sm"
+                            style={{ marginTop: 12 }}
+                        />
+                    </View>
+                </PremiumCard>
+            </AnimatedPressable>
+        </FadeInView>
     );
 
     return (
@@ -164,15 +154,15 @@ export default function HomeScreen({ navigation }: any) {
 
             {/* List */}
             {bizLoading && businesses.length === 0 ? (
-                <View style={styles.centered}>
-                    <ActivityIndicator color={colors.accent} size="large" />
+                <View style={[styles.listContent, { paddingTop: 16 }]}>
+                    {[1, 2, 3].map(i => <BusinessCardSkeleton key={i} />)}
                 </View>
             ) : businesses.length === 0 && !bizLoading ? (
-                <View style={[styles.centered, { paddingTop: 60 }]}>
-                    <Feather name="search" size={52} color={colors.accent} style={{ opacity: 0.4, marginBottom: 16 }} />
-                    <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Sin resultados</Text>
-                    <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Intenta con otro nombre</Text>
-                </View>
+                <EmptyState
+                    icon="search-outline"
+                    title="Sin resultados"
+                    subtitle="No encontramos barberos en tu zona. Intenta con otra búsqueda."
+                />
             ) : (
                 <FlatList
                     data={businesses}

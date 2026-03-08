@@ -2,6 +2,8 @@ import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
+import { PremiumCard } from '../ui/PremiumCard';
+import AnimatedPressable from '../ui/AnimatedPressable';
 
 interface StaffCardProps {
     name: string;
@@ -14,37 +16,38 @@ export const StaffCard = ({ name, photoUrl, onSelect, isSelected }: StaffCardPro
     const { colors, isDark } = useTheme();
 
     return (
-        <TouchableOpacity
-            style={[
-                styles.card,
-                {
-                    backgroundColor: colors.surface,
-                    borderColor: isSelected ? colors.accent : colors.border
-                }
-            ]}
-            onPress={onSelect}
-            activeOpacity={0.7}
-        >
-            <View style={styles.content}>
-                <View style={styles.left}>
-                    {photoUrl ? (
-                        <Image source={{ uri: photoUrl }} style={[styles.avatar, { borderColor: isSelected ? colors.accent : colors.border }]} />
-                    ) : (
-                        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.accentDim }]}>
-                            <Text style={[styles.initial, { color: colors.accent }]}>
-                                {name.charAt(0).toUpperCase()}
-                            </Text>
+        <AnimatedPressable onPress={onSelect} style={{ marginBottom: 12 }}>
+            <PremiumCard
+                elevated={isSelected}
+                style={[
+                    styles.card,
+                    {
+                        borderColor: isSelected ? colors.accent : colors.border,
+                        padding: 12
+                    }
+                ]}
+            >
+                <View style={styles.content}>
+                    <View style={styles.left}>
+                        {photoUrl ? (
+                            <Image source={{ uri: photoUrl }} style={[styles.avatar, { borderColor: isSelected ? colors.accent : colors.border }]} />
+                        ) : (
+                            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.accentDim }]}>
+                                <Text style={[styles.initial, { color: colors.accent }]}>
+                                    {name.charAt(0).toUpperCase()}
+                                </Text>
+                            </View>
+                        )}
+                        <Text style={[styles.name, { color: colors.textPrimary }]}>{name}</Text>
+                    </View>
+                    {isSelected && (
+                        <View style={[styles.checkCircle, { backgroundColor: colors.accent }]}>
+                            <Feather name="check" size={14} color="#FFF" />
                         </View>
                     )}
-                    <Text style={[styles.name, { color: colors.textPrimary }]}>{name}</Text>
                 </View>
-                {isSelected && (
-                    <View style={[styles.checkCircle, { backgroundColor: colors.accent }]}>
-                        <Feather name="check" size={14} color="#FFF" />
-                    </View>
-                )}
-            </View>
-        </TouchableOpacity>
+            </PremiumCard>
+        </AnimatedPressable>
     );
 };
 

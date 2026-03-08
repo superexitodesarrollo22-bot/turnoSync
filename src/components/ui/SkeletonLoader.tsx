@@ -1,120 +1,203 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Dimensions, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
 
 const { width } = Dimensions.get('window');
 
-const SkeletonItem = ({ style }: { style: any }) => {
-    const opacity = React.useRef(new Animated.Value(0.3)).current;
+function useShimmer() {
+    const { isDark } = useTheme();
+    const shimmerAnim = useRef(new Animated.Value(0)).current;
 
-    React.useEffect(() => {
+    const baseColor = isDark ? '#2A2A3E' : '#E0E0E8';
+    const highlightColor = isDark ? '#383855' : '#F0F0F5';
+
+    useEffect(() => {
         Animated.loop(
             Animated.sequence([
-                Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
-                Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+                Animated.timing(shimmerAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: false,
+                }),
+                Animated.timing(shimmerAnim, {
+                    toValue: 0,
+                    duration: 1000,
+                    useNativeDriver: false,
+                }),
             ])
         ).start();
-    }, []);
+    }, [shimmerAnim, isDark]);
 
-    return <Animated.View style={[styles.skeletonBase, style, { opacity }]} />;
+    const backgroundColor = shimmerAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [baseColor, highlightColor],
+    });
+
+    return backgroundColor;
+}
+
+interface SkeletonBoxProps {
+    width?: number | string;
+    height?: number | string;
+    borderRadius?: number;
+    style?: any;
+    flex?: number;
+}
+
+const SkeletonBox = ({ width, height, borderRadius = 4, style, flex }: SkeletonBoxProps) => {
+    const backgroundColor = useShimmer();
+
+    return (
+        <Animated.View
+            style={[
+                { width, height, borderRadius, backgroundColor, flex },
+                style,
+            ]}
+        />
+    );
 };
 
-export const HomeScreenSkeleton = () => (
-    <View style={styles.container}>
-        <View style={styles.header}>
-            <View style={styles.headerLeft}>
-                <SkeletonItem style={styles.avatar46} />
-                <View style={styles.headerTextCol}>
-                    <SkeletonItem style={styles.lineSmall} />
-                    <SkeletonItem style={styles.lineMedium} />
-                </View>
+export const BusinessCardSkeleton = () => {
+    const { colors } = useTheme();
+    return (
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <SkeletonBox width="100%" height={130} borderRadius={16} style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }} />
+            <View style={{ padding: 16 }}>
+                <SkeletonBox width="80%" height={20} style={{ marginBottom: 8 }} />
+                <SkeletonBox width="50%" height={14} />
             </View>
-            <SkeletonItem style={styles.bellCircle} />
         </View>
-        <SkeletonItem style={styles.searchBar} />
-        <SkeletonItem style={styles.sectionTitle} />
-        {[1, 2, 3].map((i) => (
-            <SkeletonItem key={i} style={styles.cardLarge} />
-        ))}
-    </View>
-);
+    );
+};
 
-export const BookingsScreenSkeleton = ({ paddingTop = 0 }: { paddingTop?: number }) => (
-    <View style={[styles.container, { paddingTop: paddingTop + 16 }]}>
-        <SkeletonItem style={{ width: 160, height: 28, borderRadius: 6, marginBottom: 8 }} />
-        <SkeletonItem style={{ width: 90, height: 14, borderRadius: 4, marginBottom: 24 }} />
-
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-            <SkeletonItem style={{ flex: 1, height: 40, borderRadius: 14 }} />
-            <SkeletonItem style={{ flex: 1, height: 40, borderRadius: 14 }} />
-        </View>
-
-        {[1, 2, 3].map((i) => (
-            <View key={i} style={styles.skeletonCard}>
-                <SkeletonItem style={{ width: 4, height: '100%', borderRadius: 4, marginRight: 12 }} />
-                <SkeletonItem style={{ width: 44, height: 44, borderRadius: 22, marginRight: 14 }} />
-                <View style={{ flex: 1, gap: 8 }}>
-                    <SkeletonItem style={{ width: '70%', height: 16, borderRadius: 4 }} />
-                    <SkeletonItem style={{ width: '50%', height: 13, borderRadius: 4 }} />
-                    <SkeletonItem style={{ width: '40%', height: 13, borderRadius: 4 }} />
+export const BookingCardSkeleton = () => {
+    const { colors } = useTheme();
+    return (
+        <View style={[styles.bookingCard, { backgroundColor: colors.surface }]}>
+            <View style={styles.row}>
+                <SkeletonBox width={44} height={44} borderRadius={22} style={{ marginRight: 12 }} />
+                <View style={{ flex: 1, gap: 6 }}>
+                    <SkeletonBox width="60%" height={16} />
+                    <SkeletonBox width="40%" height={14} />
+                    <SkeletonBox width="50%" height={12} />
                 </View>
-                <SkeletonItem style={{ width: 48, height: 16, borderRadius: 4, marginLeft: 8 }} />
+                <SkeletonBox width={70} height={22} borderRadius={11} style={{ marginLeft: 8 }} />
             </View>
-        ))}
-    </View>
-);
-
-export const ProfileScreenSkeleton = () => (
-    <View style={styles.containerCentered}>
-        <SkeletonItem style={styles.bigAvatar80} />
-        <SkeletonItem style={styles.line150} />
-        <SkeletonItem style={styles.line100} />
-        <View style={styles.menuList}>
-            {[1, 2, 3, 4].map((i) => (
-                <SkeletonItem key={i} style={styles.menuItem56} />
-            ))}
         </View>
-    </View>
-);
+    );
+};
+
+export const ServiceCardSkeleton = () => {
+    const { colors } = useTheme();
+    return (
+        <View style={[styles.serviceCard, { backgroundColor: colors.surface }]}>
+            <SkeletonBox width={48} height={48} borderRadius={24} style={{ marginBottom: 12 }} />
+            <SkeletonBox width="80%" height={16} style={{ marginBottom: 6 }} />
+            <SkeletonBox width="50%" height={14} />
+        </View>
+    );
+};
+
+export const HomeScreenSkeleton = () => {
+    const insets = useSafeAreaInsets();
+    return (
+        <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+            <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                    <SkeletonBox width={44} height={44} borderRadius={22} style={{ marginRight: 12 }} />
+                    <View style={{ gap: 6 }}>
+                        <SkeletonBox width={60} height={12} />
+                        <SkeletonBox width={100} height={18} />
+                    </View>
+                </View>
+                <SkeletonBox width={40} height={40} borderRadius={20} />
+            </View>
+            <View style={{ paddingHorizontal: 20 }}>
+                <SkeletonBox width="100%" height={52} borderRadius={14} style={{ marginBottom: 16 }} />
+                <SkeletonBox width={150} height={20} style={{ marginBottom: 12 }} />
+                {[1, 2, 3].map(i => <BusinessCardSkeleton key={i} />)}
+            </View>
+        </View>
+    );
+};
+
+export const BookingsScreenSkeleton = ({ paddingTop = 0 }: { paddingTop?: number }) => {
+    return (
+        <View style={[styles.container, { paddingTop: paddingTop + 16, paddingHorizontal: 16 }]}>
+            <SkeletonBox width={160} height={28} style={{ marginBottom: 8 }} />
+            <SkeletonBox width={90} height={14} style={{ marginBottom: 24 }} />
+
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+                <SkeletonBox flex={1} height={40} borderRadius={14} />
+                <SkeletonBox flex={1} height={40} borderRadius={14} />
+            </View>
+
+            {[1, 2, 3, 4].map(i => <BookingCardSkeleton key={i} />)}
+        </View>
+    );
+};
+
+export const ProfileScreenSkeleton = () => {
+    const { colors } = useTheme();
+    return (
+        <View style={styles.containerCentered}>
+            <SkeletonBox width={80} height={80} borderRadius={40} style={{ marginBottom: 16, marginTop: 40 }} />
+            <SkeletonBox width={150} height={20} style={{ marginBottom: 8 }} />
+            <SkeletonBox width={100} height={14} style={{ marginBottom: 30 }} />
+            <View style={styles.menuList}>
+                {[1, 2, 3, 4].map((i) => (
+                    <SkeletonBox key={i} width="100%" height={56} borderRadius={12} style={{ marginBottom: 8 }} />
+                ))}
+            </View>
+        </View>
+    );
+};
 
 export const ServicesScreenSkeleton = () => (
     <View style={styles.container}>
-        <SkeletonItem style={styles.sectionTitle} />
+        <SkeletonBox width={150} height={20} style={{ marginBottom: 20 }} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
             {[1, 2, 3, 4].map((i) => (
-                <SkeletonItem key={i} style={{ width: '48%', height: 120, borderRadius: 12, marginBottom: 15 }} />
+                <ServiceCardSkeleton key={i} />
             ))}
         </View>
     </View>
 );
 
 const styles = StyleSheet.create({
-    skeletonBase: { backgroundColor: '#1A1A2E' },
-    container: { flex: 1, padding: 20 },
+    container: { flex: 1 },
     containerCentered: { flex: 1, padding: 20, alignItems: 'center' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 20 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, paddingHorizontal: 20 },
     headerLeft: { flexDirection: 'row', alignItems: 'center' },
-    avatar46: { width: 46, height: 46, borderRadius: 23, marginRight: 12 },
-    headerTextCol: { gap: 6 },
-    lineSmall: { width: 40, height: 12, borderRadius: 4 },
-    lineMedium: { width: 100, height: 18, borderRadius: 4 },
-    bellCircle: { width: 40, height: 40, borderRadius: 20 },
-    searchBar: { width: '100%', height: 52, borderRadius: 14, marginBottom: 25 },
-    sectionTitle: { width: 150, height: 20, borderRadius: 4, marginBottom: 20 },
-    cardLarge: { width: '100%', height: 280, borderRadius: 16, marginBottom: 16 },
-    skeletonCard: {
+    card: {
+        width: '100%',
+        borderRadius: 16,
+        marginBottom: 16,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    bookingCard: {
+        width: '100%',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    serviceCard: {
+        width: (width / 2) - 24,
+        height: 100,
+        borderRadius: 12,
+        marginBottom: 15,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 12,
+    },
+    row: {
         flexDirection: 'row',
         alignItems: 'center',
-        height: 90,
-        width: '100%',
-        backgroundColor: '#1A1A2E',
-        borderRadius: 16,
-        padding: 14,
-        marginBottom: 12,
-        overflow: 'hidden',
     },
-    bigAvatar80: { width: 80, height: 80, borderRadius: 40, marginBottom: 16, marginTop: 40 },
-    line150: { width: 150, height: 20, borderRadius: 4, marginBottom: 8 },
-    line100: { width: 100, height: 14, borderRadius: 4, marginBottom: 30 },
     menuList: { width: '100%', gap: 8 },
-    menuItem56: { width: '100%', height: 56, borderRadius: 12 },
 });

@@ -12,6 +12,10 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMyBookings } from '../../hooks/useMyBookings';
 import { BookingsScreenSkeleton } from '../../components/ui/SkeletonLoader';
 import { StatusBar } from 'expo-status-bar';
+import { EmptyState } from '../../components/ui/EmptyState';
+import FadeInView from '../../components/ui/FadeInView';
+import { PremiumCard } from '../../components/ui/PremiumCard';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 
 // NOTA: el hook useMyBookings retorna bookings con la estructura:
 // appointments.* + businesses(name, address) + services(name, price_cents, duration_minutes)
@@ -80,31 +84,16 @@ export default function MyBookingsScreen({ navigation }: any) {
     }
 
     const renderEmpty = () => (
-        <View style={styles.emptyContainer}>
-            <View style={[styles.emptyIconCircle, { backgroundColor: colors.accentDim }]}>
-                <Feather name="calendar" size={40} color={colors.accent} />
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-                {tab === 'upcoming' ? 'Sin turnos próximos' : 'Sin historial aún'}
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-                {tab === 'upcoming' ? 'Reserva tu próximo turno' : 'Tus turnos pasados aparecerán aquí'}
-            </Text>
-            {tab === 'upcoming' && (
-                <TouchableOpacity
-                    style={[styles.reserveBtn, { backgroundColor: colors.accent }]}
-                    onPress={() => navigation.navigate('Home')}
-                    activeOpacity={0.85}
-                >
-                    <Text style={[styles.reserveBtnText, { color: isDark ? '#0D0D1A' : '#FFFFFF' }]}>
-                        Reservar ahora
-                    </Text>
-                </TouchableOpacity>
-            )}
-        </View>
+        <EmptyState
+            icon="calendar-outline"
+            title={tab === 'upcoming' ? 'Sin reservas aún' : 'Sin historial aún'}
+            subtitle={tab === 'upcoming' ? 'Reserva tu primer turno y aparecerá aquí.' : 'Tus turnos pasados aparecerán aquí.'}
+            actionLabel={tab === 'upcoming' ? 'Explorar barberos' : undefined}
+            onAction={tab === 'upcoming' ? () => navigation.navigate('Home') : undefined}
+        />
     );
 
-    const renderItem = ({ item }: { item: any }) => {
+    const renderItem = ({ item, index }: { item: any, index: number }) => {
         const { day, time } = formatBookingDate(item.start_at);
         const businessName: string = item.businesses?.name ?? 'Barbería';
         const businessAddress: string | null = item.businesses?.address ?? null;
@@ -118,59 +107,52 @@ export default function MyBookingsScreen({ navigation }: any) {
         const priceFormatted = formatPrice(priceCents);
 
         return (
-            <View
-                style={[
-                    styles.card,
-                    {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: isDark ? 0 : 0.06,
-                        shadowRadius: 6,
-                        elevation: isDark ? 0 : 2,
-                    }
-                ]}
-            >
-                <View style={[styles.statusStripe, { backgroundColor: statusColor }]} />
+            <FadeInView delay={index * 80}>
+                <PremiumCard
+                    style={{
+                        padding: 0,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginBottom: 12,
+                        minHeight: 86,
+                    }}
+                >
+                    <View style={[styles.statusStripe, { backgroundColor: statusColor }]} />
 
-                <View style={[styles.iconCircle, { backgroundColor: colors.accentDim }]}>
-                    <Feather name="scissors" size={18} color={colors.accent} />
-                </View>
-
-                <View style={styles.cardBody}>
-                    <Text style={[styles.businessName, { color: colors.textPrimary }]} numberOfLines={1}>
-                        {businessName}
-                    </Text>
-                    {businessAddress ? (
-                        <Text style={[styles.addressText, { color: colors.textMuted }]} numberOfLines={1}>
-                            {businessAddress}
-                        </Text>
-                    ) : null}
-                    <Text style={[styles.serviceText, { color: colors.textSecondary }]} numberOfLines={1}>
-                        {serviceName}{durationMin ? ` · ${durationMin} min` : ''}
-                    </Text>
-                    <View style={styles.dateRow}>
-                        <Feather name="clock" size={11} color={colors.accent} style={{ marginRight: 4 }} />
-                        <Text style={[styles.dateText, { color: colors.accent }]}>
-                            {day} · {time}
-                        </Text>
+                    <View style={[styles.iconCircle, { backgroundColor: colors.accentDim }]}>
+                        <Feather name="scissors" size={18} color={colors.accent} />
                     </View>
-                </View>
 
-                <View style={styles.cardRight}>
-                    {priceFormatted ? (
-                        <Text style={[styles.priceText, { color: colors.textPrimary }]}>
-                            {priceFormatted}
+                    <View style={styles.cardBody}>
+                        <Text style={[styles.businessName, { color: colors.textPrimary }]} numberOfLines={1}>
+                            {businessName}
                         </Text>
-                    ) : null}
-                    <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
-                        <Text style={[styles.statusBadgeText, { color: statusColor }]}>
-                            {statusLabel}
+                        {businessAddress ? (
+                            <Text style={[styles.addressText, { color: colors.textMuted }]} numberOfLines={1}>
+                                {businessAddress}
+                            </Text>
+                        ) : null}
+                        <Text style={[styles.serviceText, { color: colors.textSecondary }]} numberOfLines={1}>
+                            {serviceName}{durationMin ? ` · ${durationMin} min` : ''}
                         </Text>
+                        <View style={styles.dateRow}>
+                            <Feather name="clock" size={11} color={colors.accent} style={{ marginRight: 4 }} />
+                            <Text style={[styles.dateText, { color: colors.accent }]}>
+                                {day} · {time}
+                            </Text>
+                        </View>
                     </View>
-                </View>
-            </View>
+
+                    <View style={styles.cardRight}>
+                        {priceFormatted ? (
+                            <Text style={[styles.priceText, { color: colors.textPrimary }]}>
+                                {priceFormatted}
+                            </Text>
+                        ) : null}
+                        <StatusBadge status={status as any} size="sm" />
+                    </View>
+                </PremiumCard>
+            </FadeInView>
         );
     };
 

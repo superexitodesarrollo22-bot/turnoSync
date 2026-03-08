@@ -5,6 +5,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../services/supabase';
 import { DatePicker } from '../../components/booking/DatePicker';
 import { formatFullDate } from '../../utils/bookingHelpers';
+import { GradientButton } from '../../components/ui/GradientButton';
+import { PremiumCard } from '../../components/ui/PremiumCard';
 
 export default function BookingSelectDateScreen({ navigation, route }: any) {
     const { businessId, businessName, service, staff } = route.params;
@@ -107,29 +109,19 @@ export default function BookingSelectDateScreen({ navigation, route }: any) {
                 )}
 
                 {selectedDate ? (
-                    <View style={[styles.selectionPreview, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <PremiumCard style={[styles.selectionPreview, { alignItems: 'center' }]}>
                         <Text style={[styles.previewLabel, { color: colors.textMuted }]}>FECHA SELECCIONADA</Text>
                         <Text style={[styles.previewValue, { color: colors.textPrimary }]}>{formatFullDate(selectedDate)}</Text>
-                    </View>
+                    </PremiumCard>
                 ) : null}
             </ScrollView>
 
             <View style={[styles.footer, { backgroundColor: colors.surface }]}>
-                <TouchableOpacity
-                    style={[
-                        styles.continueBtn,
-                        { backgroundColor: selectedDate ? colors.accent : colors.border }
-                    ]}
-                    disabled={!selectedDate}
+                <GradientButton
+                    label="Ver horarios disponibles"
                     onPress={handleContinue}
-                >
-                    <Text style={[
-                        styles.continueText,
-                        { color: selectedDate ? (isDark ? '#0D0D1A' : '#FFFFFF') : colors.textMuted }
-                    ]}>
-                        Ver horarios disponibles
-                    </Text>
-                </TouchableOpacity>
+                    disabled={!selectedDate}
+                />
             </View>
         </SafeAreaView>
     );
@@ -197,10 +189,6 @@ const styles = StyleSheet.create({
     },
     selectionPreview: {
         marginTop: 25,
-        padding: 16,
-        borderRadius: 18,
-        borderWidth: 1.5,
-        alignItems: 'center',
     },
     previewLabel: {
         fontSize: 11,

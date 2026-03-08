@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { ToastProvider } from './src/contexts/ToastContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import AuthCallbackScreen from './src/screens/Auth/AuthCallbackScreen';
@@ -61,9 +62,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer linking={linking}>
-          <RootNavigator />
-        </NavigationContainer>
+        <ToastProvider>
+          <NavigationContainer linking={linking}>
+            <RootNavigator />
+          </NavigationContainer>
+        </ToastProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

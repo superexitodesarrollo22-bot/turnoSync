@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                 // Setear perfil INMEDIATAMENTE desde los metadatos de la sesión
                 // para que la UI muestre los datos sin esperar la DB
-                setProfile(prev => ({
+                setProfile((prev: any) => ({
                     ...(prev ?? {}),
                     supabase_auth_uid: session.user.id,
                     email: session.user.email ?? '',

@@ -1,6 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Dimensions, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import AnimatedPressable from '../ui/AnimatedPressable';
 
 const { width } = Dimensions.get('window');
 const COLUMN_WIDTH = (width - 64) / 4; // 4 columnas con padding lateral
@@ -15,24 +16,24 @@ export const SlotButton = ({ label, onSelect, isSelected }: SlotButtonProps) => 
     const { colors, isDark } = useTheme();
 
     return (
-        <TouchableOpacity
-            style={[
-                styles.button,
-                {
-                    backgroundColor: isSelected ? colors.accent : colors.surface,
-                    borderColor: isSelected ? colors.accent : colors.border
-                }
-            ]}
-            onPress={onSelect}
-            activeOpacity={0.7}
-        >
-            <Text style={[
-                styles.label,
-                { color: isSelected ? (isDark ? '#0D0D1A' : '#FFFFFF') : colors.textPrimary }
-            ]}>
-                {label}
-            </Text>
-        </TouchableOpacity>
+        <AnimatedPressable onPress={onSelect} scaleValue={0.94}>
+            <View
+                style={[
+                    styles.button,
+                    {
+                        backgroundColor: isSelected ? colors.accent : colors.surface,
+                        borderColor: isSelected ? colors.accent : colors.border
+                    }
+                ]}
+            >
+                <Text style={[
+                    styles.label,
+                    { color: isSelected ? (isDark ? '#0D0D1A' : '#FFFFFF') : colors.textPrimary }
+                ]}>
+                    {label}
+                </Text>
+            </View>
+        </AnimatedPressable>
     );
 };
 

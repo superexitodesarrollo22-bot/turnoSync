@@ -16,6 +16,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../hooks/useToast';
 import { ProfileScreenSkeleton } from '../../components/ui/SkeletonLoader';
 import { AppLogo } from '../../components/ui/AppLogo';
 
@@ -24,6 +25,7 @@ export default function ProfileScreen({ navigation }: any) {
     const { colors, isDark } = useTheme();
     const { user, loading } = useCurrentUser();
     const { signOut } = useAuth();
+    const { showToast } = useToast();
 
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -39,7 +41,7 @@ export default function ProfileScreen({ navigation }: any) {
 
     const handleOpenURL = (url: string) => {
         Linking.openURL(url).catch(() =>
-            Alert.alert('Error', 'No se pudo abrir el enlace.')
+            showToast({ type: 'error', message: 'No se pudo abrir el enlace.' })
         );
     };
 
@@ -131,8 +133,8 @@ export default function ProfileScreen({ navigation }: any) {
                 {renderSectionTitle('Configuración')}
                 <View style={styles.menuSection}>
                     {renderMenuItem('shopping-bag', 'Comprar TurnoSync', false, () => Share.share({ message: 'Descargá TurnoSync y reservá tu turno en segundos 💈 https://turnosync.app' }))}
-                    {renderMenuItem('globe', 'Idioma', false, () => Alert.alert('Próximamente', 'Cambio de idioma disponible pronto.'))}
-                    {renderMenuItem('bell', 'Notificaciones', false, () => Alert.alert('Próximamente', 'Notificaciones disponibles pronto.'))}
+                    {renderMenuItem('globe', 'Idioma', false, () => showToast({ type: 'info', message: 'Cambio de idioma disponible pronto.' }))}
+                    {renderMenuItem('bell', 'Notificaciones', false, () => showToast({ type: 'info', message: 'Notificaciones disponibles pronto.' }))}
                     {renderMenuItem('shield', 'Política de privacidad', false, () => handleOpenURL('https://turnosync.app/privacidad'))}
                     {renderMenuItem('file-text', 'Términos y condiciones', false, () => handleOpenURL('https://turnosync.app/terminos'))}
                     {renderMenuItem('credit-card', 'Términos de la Suscripción', false, () => handleOpenURL('https://turnosync.app/suscripcion'))}
@@ -156,7 +158,7 @@ export default function ProfileScreen({ navigation }: any) {
                             style={{ width: '100%', backgroundColor: colors.error, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 12 }}
                             onPress={async () => {
                                 setShowLogoutModal(false);
-                                try { await signOut(); } catch { Alert.alert('Error', 'No se pudo cerrar sesión.'); }
+                                try { await signOut(); } catch { showToast({ type: 'error', message: 'No se pudo cerrar sesión.' }); }
                             }}
                         >
                             <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Cerrar sesión</Text>

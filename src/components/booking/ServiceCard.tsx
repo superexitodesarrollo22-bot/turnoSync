@@ -3,6 +3,8 @@ import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { formatPrice, formatDuration } from '../../utils/bookingHelpers';
+import { PremiumCard } from '../ui/PremiumCard';
+import AnimatedPressable from '../ui/AnimatedPressable';
 
 interface ServiceCardProps {
     name: string;
@@ -16,28 +18,29 @@ export const ServiceCard = ({ name, duration, price, onSelect, isSelected }: Ser
     const { colors, isDark } = useTheme();
 
     return (
-        <TouchableOpacity
-            style={[
-                styles.card,
-                {
-                    backgroundColor: colors.surface,
-                    borderColor: isSelected ? colors.accent : colors.border
-                }
-            ]}
-            onPress={onSelect}
-            activeOpacity={0.7}
-        >
-            <View style={styles.content}>
-                <View>
-                    <Text style={[styles.name, { color: colors.textPrimary }]}>{name}</Text>
-                    <Text style={[styles.duration, { color: colors.textSecondary }]}>{formatDuration(duration)}</Text>
+        <AnimatedPressable onPress={onSelect} style={{ marginBottom: 12 }}>
+            <PremiumCard
+                elevated={isSelected}
+                style={[
+                    styles.card,
+                    {
+                        borderColor: isSelected ? colors.accent : colors.border,
+                        padding: 16
+                    }
+                ]}
+            >
+                <View style={styles.content}>
+                    <View>
+                        <Text style={[styles.name, { color: colors.textPrimary }]}>{name}</Text>
+                        <Text style={[styles.duration, { color: colors.textSecondary }]}>{formatDuration(duration)}</Text>
+                    </View>
+                    <View style={styles.rightSide}>
+                        <Text style={[styles.price, { color: colors.accent }]}>{formatPrice(price)}</Text>
+                        <Feather name="chevron-right" size={20} color={colors.textMuted} />
+                    </View>
                 </View>
-                <View style={styles.rightSide}>
-                    <Text style={[styles.price, { color: colors.accent }]}>{formatPrice(price)}</Text>
-                    <Feather name="chevron-right" size={20} color={colors.textMuted} />
-                </View>
-            </View>
-        </TouchableOpacity>
+            </PremiumCard>
+        </AnimatedPressable>
     );
 };
 

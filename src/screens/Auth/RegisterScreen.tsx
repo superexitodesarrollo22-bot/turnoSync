@@ -15,11 +15,13 @@ import { supabase } from '../../services/supabase';
 import { useTheme } from '../../hooks/useTheme';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useToast } from '../../hooks/useToast';
 import { StatusBar } from 'expo-status-bar';
 
 export default function RegisterScreen() {
     const navigation = useNavigation<any>();
     const { colors, isDark } = useTheme();
+    const { showToast } = useToast();
 
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
@@ -78,16 +80,13 @@ export default function RegisterScreen() {
             });
 
             if (error) {
-                Alert.alert('Registration Error', error.message);
+                showToast({ type: 'error', message: error.message });
             } else if (data?.user) {
-                Alert.alert(
-                    'Success',
-                    'Account created! If email confirmation is enabled, check your inbox.',
-                    [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
-                );
+                showToast({ type: 'success', message: 'Account created! If email confirmation is enabled, check your inbox.' });
+                navigation.navigate('Login');
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Could not create account');
+            showToast({ type: 'error', message: error.message || 'Could not create account' });
         } finally {
             setIsLoading(false);
         }

@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-na
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { formatFullDate } from '../../utils/bookingHelpers';
+import { PremiumCard } from '../../components/ui/PremiumCard';
+import { GradientButton } from '../../components/ui/GradientButton';
 
 export default function BookingSuccessScreen({ navigation, route }: any) {
     const { appointment } = route.params;
@@ -22,7 +24,7 @@ export default function BookingSuccessScreen({ navigation, route }: any) {
                 <Text style={[styles.title, { color: colors.textPrimary }]}>¡Turno reservado!</Text>
                 <Text style={[styles.subtitle, { color: colors.textSecondary }]}> te esperamos el {dateLabel} a las {timeLabel} hs</Text>
 
-                <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <PremiumCard elevated style={styles.card}>
                     <View style={styles.cardHeader}>
                         <View style={[styles.iconBox, { backgroundColor: colors.accentDim }]}>
                             <Feather name="scissors" size={20} color={colors.accent} />
@@ -42,16 +44,14 @@ export default function BookingSuccessScreen({ navigation, route }: any) {
                             <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{appointment.staff_name}</Text>
                         </View>
                     </View>
-                </View>
+                </PremiumCard>
             </View>
 
             <View style={styles.footer}>
-                <TouchableOpacity
-                    style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
+                <GradientButton
+                    label="Ver mis turnos"
                     onPress={() => navigation.navigate('MainTabs', { screen: 'MyBookings' })}
-                >
-                    <Text style={[styles.primaryBtnText, { color: isDark ? '#0D0D1A' : '#FFFFFF' }]}>Ver mis turnos</Text>
-                </TouchableOpacity>
+                />
 
                 <TouchableOpacity
                     style={styles.secondaryBtn}
@@ -97,14 +97,6 @@ const styles = StyleSheet.create({
     },
     card: {
         width: '100%',
-        borderRadius: 24,
-        borderWidth: 1.5,
-        padding: 20,
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
     },
     cardHeader: {
         flexDirection: 'row',

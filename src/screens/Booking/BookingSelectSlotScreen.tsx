@@ -4,6 +4,8 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useAvailableSlots } from '../../hooks/useAvailableSlots';
 import { SlotButton } from '../../components/booking/SlotButton';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { GradientButton } from '../../components/ui/GradientButton';
 import { formatFullDate } from '../../utils/bookingHelpers';
 
 export default function BookingSelectSlotScreen({ navigation, route }: any) {
@@ -48,18 +50,16 @@ export default function BookingSelectSlotScreen({ navigation, route }: any) {
                         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{formatFullDate(date)}</Text>
                     </View>
                 </View>
-                <View style={styles.emptyContent}>
-                    <View style={[styles.emptyIconCircle, { backgroundColor: colors.accentDim }]}>
-                        <Feather name="calendar" size={40} color={colors.accent} />
-                    </View>
-                    <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Día sin disponibilidad</Text>
-                    <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>No hay horarios disponibles para este día. Prueba con otra fecha.</Text>
-                    <TouchableOpacity
-                        style={[styles.retryBtn, { backgroundColor: colors.accent }]}
+                <EmptyState
+                    icon="calendar-outline"
+                    title="Día sin disponibilidad"
+                    subtitle="No hay horarios disponibles para este día. Prueba con otra fecha."
+                />
+                <View style={{ padding: 20 }}>
+                    <GradientButton
+                        label="Cambiar fecha"
                         onPress={() => navigation.goBack()}
-                    >
-                        <Text style={[styles.retryText, { color: isDark ? '#0D0D1A' : '#FFFFFF' }]}>Cambiar fecha</Text>
-                    </TouchableOpacity>
+                    />
                 </View>
             </SafeAreaView>
         );

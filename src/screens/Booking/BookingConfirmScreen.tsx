@@ -4,12 +4,16 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useBookAppointment } from '../../hooks/useBookAppointment';
 import { formatFullDate, formatPrice } from '../../utils/bookingHelpers';
+import { useToast } from '../../hooks/useToast';
+import { PremiumCard } from '../../components/ui/PremiumCard';
+import { GradientButton } from '../../components/ui/GradientButton';
 
 export default function BookingConfirmScreen({ navigation, route }: any) {
     const { businessId, businessName, service, staff, date, slot } = route.params;
     const { colors, isDark } = useTheme();
     const { bookAppointment, loading, error } = useBookAppointment();
     const [notes, setNotes] = useState('');
+    const { showToast } = useToast();
 
     const handleConfirm = async () => {
         const result = await bookAppointment({
@@ -29,7 +33,7 @@ export default function BookingConfirmScreen({ navigation, route }: any) {
                 }]
             });
         } else if (error) {
-            Alert.alert('Error en la reserva', error);
+            showToast({ type: 'error', message: error });
         }
     };
 
@@ -49,7 +53,7 @@ export default function BookingConfirmScreen({ navigation, route }: any) {
             </View>
 
             <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-                <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <PremiumCard elevated style={{ backgroundColor: colors.surface }}>
                     <View style={styles.summaryTitleRow}>
                         <Feather name="info" size={18} color={colors.accent} />
                         <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>RESUMEN DE TU TURNO</Text>
@@ -84,7 +88,7 @@ export default function BookingConfirmScreen({ navigation, route }: any) {
                         <Text style={[styles.priceLabel, { color: colors.textPrimary }]}>Total a pagar</Text>
                         <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{formatPrice(service.price_cents)}</Text>
                     </View>
-                </View>
+                </PremiumCard>
 
                 <View style={styles.notesSection}>
                     <Text style={[styles.notesHeader, { color: colors.textSecondary }]}>NOTAS PARA EL BARBERO (OPCIONAL)</Text>
@@ -107,17 +111,13 @@ export default function BookingConfirmScreen({ navigation, route }: any) {
             </ScrollView>
 
             <View style={[styles.footer, { backgroundColor: colors.surface }]}>
-                <TouchableOpacity
-                    style={[styles.confirmBtn, { backgroundColor: colors.accent }]}
-                    disabled={loading}
+                <GradientButton
+                    label="CONFIRMAR RESERVA"
                     onPress={handleConfirm}
-                >
-                    {loading ? (
-                        <ActivityIndicator color={isDark ? '#0D0D1A' : '#FFFFFF'} />
-                    ) : (
-                        <Text style={[styles.confirmText, { color: isDark ? '#0D0D1A' : '#FFFFFF' }]}>CONFIRMAR RESERVA</Text>
-                    )}
-                </TouchableOpacity>
+                    loading={loading}
+                    disabled={loading}
+                    variant="primary"
+                />
                 <TouchableOpacity
                     style={styles.cancelLink}
                     onPress={() => navigation.goBack()}

@@ -2,12 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, Linking } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
+import { useToast } from '../../hooks/useToast';
 import { supabase } from '../../services/supabase';
 import { formatFullDate, formatPrice, getStatusLabel, formatShortDate } from '../../utils/bookingHelpers';
+import { GradientHeader } from '../../components/ui/GradientHeader';
+import { PremiumCard } from '../../components/ui/PremiumCard';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { GradientButton } from '../../components/ui/GradientButton';
 
 export default function AppointmentDetailScreen({ navigation, route }: any) {
     const { appointmentId } = route.params;
     const { colors, isDark } = useTheme();
+    const { showToast } = useToast();
     const [appointment, setAppointment] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [cancelling, setCancelling] = useState(false);
@@ -30,7 +36,7 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
             setAppointment(data);
         } catch (e) {
             console.error('[AppointmentDetail] Error:', e);
-            Alert.alert('Error', 'No se pudo cargar el detalle del turno.');
+            showToast({ type: 'error', message: 'No se pudo cargar el detalle del turno.' });
         } finally {
             setLoading(false);
         }
@@ -55,11 +61,10 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
                             const { error: cancelError } = await supabase.rpc('cancel_appointment', { p_appointment_id: appointmentId });
                             if (cancelError) throw cancelError;
 
-                            Alert.alert('Éxito', 'Tu turno ha sido cancelado.', [
-                                { text: 'OK', onPress: () => navigation.goBack() }
-                            ]);
+                            showToast({ type: 'success', message: 'Tu turno ha sido cancelado.' });
+                            navigation.goBack();
                         } catch (e: any) {
-                            Alert.alert('Error', e.message);
+                            showToast({ type: 'error', message: e.message });
                         } finally {
                             setCancelling(false);
                         }
@@ -85,16 +90,10 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Feather name="arrow-left" size={24} color={colors.textPrimary} />
-                </TouchableOpacity>
-                <Text style={[styles.title, { color: colors.textPrimary }]}>Detalle del turno</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <GradientHeader title="Detalle del turno" onBack={() => navigation.goBack()} />
 
             <ScrollView contentContainerStyle={styles.scroll}>
-                <View style={[styles.businessCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <PremiumCard elevated style={styles.businessCard}>
                     {appointment.businesses?.logo_url ? (
                         <Image source={{ uri: appointment.businesses.logo_url }} style={styles.logo} />
                     ) : (
@@ -106,14 +105,12 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
                         <Text style={[styles.businessName, { color: colors.textPrimary }]}>{appointment.businesses?.name}</Text>
                         <Text style={[styles.businessAddress, { color: colors.textSecondary }]}>{appointment.businesses?.address}</Text>
                     </View>
-                </View>
+                </PremiumCard>
 
-                <View style={[styles.detailSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <PremiumCard elevated style={styles.detailSection}>
                     <View style={styles.sectionHeader}>
                         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>ESTADO DEL TURNO</Text>
-                        <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + '20' }]}>
-                            <Text style={[styles.statusBadgeText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
-                        </View>
+                        <StatusBadge status={appointment.status as any} />
                     </View>
 
                     <View style={styles.divider} />
@@ -164,7 +161,7 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
                             <Text style={[styles.notesText, { color: colors.textPrimary }]}>"{appointment.notes}"</Text>
                         </View>
                     ) : null}
-                </View>
+                </PremiumCard>
 
                 <View style={styles.contactRow}>
                     <TouchableOpacity
@@ -184,17 +181,14 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
                 </View>
 
                 {canCancel && (
-                    <TouchableOpacity
-                        style={[styles.cancelBtn, { borderColor: colors.error }]}
+                    <GradientButton
+                        label="CANCELAR TURNO"
                         onPress={handleCancel}
+                        loading={cancelling}
                         disabled={cancelling}
-                    >
-                        {cancelling ? (
-                            <ActivityIndicator color={colors.error} />
-                        ) : (
-                            <Text style={[styles.cancelBtnText, { color: colors.error }]}>Cancelar Turno</Text>
-                        )}
-                    </TouchableOpacity>
+                        variant="outline"
+                        style={{ marginTop: 10, borderColor: colors.error }}
+                    />
                 )}
             </ScrollView>
         </SafeAreaView>

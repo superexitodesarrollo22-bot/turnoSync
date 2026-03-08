@@ -4,12 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../services/supabase';
+import { useToast } from '../../hooks/useToast';
 
 export default function ConfirmBookingScreen({ route, navigation }: any) {
     const { businessId, business, service, slot, date } = route.params;
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState(false);
+    const { showToast } = useToast();
 
     const handleConfirm = async () => {
         setLoading(true);
@@ -35,7 +37,7 @@ export default function ConfirmBookingScreen({ route, navigation }: any) {
             if (error) throw error;
             navigation.reset({ index: 0, routes: [{ name: 'MainTabs', params: { screen: 'MyBookings' } }] });
         } catch (e: any) {
-            Alert.alert('Error', e.message ?? 'No se pudo reservar. Intenta de nuevo.');
+            showToast({ type: 'error', message: e.message ?? 'No se pudo reservar. Intenta de nuevo.' });
             setLoading(false);
         }
     };
@@ -47,7 +49,7 @@ export default function ConfirmBookingScreen({ route, navigation }: any) {
             </TouchableOpacity>
             <View style={{ paddingHorizontal: 20 }}>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Confirmar turno</Text>
-                <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.cardBorder }]}>
+                <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     {[
                         { icon: 'scissors', label: 'Barbería', value: business?.name },
                         { icon: 'tag', label: 'Servicio', value: service?.name },
@@ -65,7 +67,7 @@ export default function ConfirmBookingScreen({ route, navigation }: any) {
                 <TouchableOpacity style={[styles.btn, { backgroundColor: colors.accent }]} onPress={handleConfirm} disabled={loading} activeOpacity={0.85}>
                     {loading ? <ActivityIndicator color="#0D0D1A" /> : <Text style={styles.btnText}>Confirmar reserva</Text>}
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.btnSecondary, { borderColor: colors.cardBorder }]} onPress={() => navigation.goBack()}>
+                <TouchableOpacity style={[styles.btnSecondary, { borderColor: colors.border }]} onPress={() => navigation.goBack()}>
                     <Text style={[styles.btnSecondaryText, { color: colors.textPrimary }]}>Volver</Text>
                 </TouchableOpacity>
             </View>

@@ -14,6 +14,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { useToast } from '../../hooks/useToast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppLogo } from '../../components/ui/AppLogo';
 
@@ -23,6 +24,7 @@ export default function SocialLoginScreen() {
     const navigation = useNavigation<any>();
     const { signInWithGoogle } = useAuth();
     const { colors, isDark } = useTheme();
+    const { showToast } = useToast();
     const insets = useSafeAreaInsets();
 
     const [isLoading, setIsLoading] = useState(false);
@@ -32,10 +34,10 @@ export default function SocialLoginScreen() {
             setIsLoading(true);
             const { error } = await signInWithGoogle();
             if (error && error !== 'Cancelado por el usuario') {
-                Alert.alert('Error de OAuth', error);
+                showToast({ type: 'error', message: error });
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Error de conexión');
+            showToast({ type: 'error', message: error.message || 'Error de conexión' });
         } finally {
             setIsLoading(false);
         }

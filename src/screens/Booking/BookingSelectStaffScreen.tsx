@@ -5,6 +5,9 @@ import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../services/supabase';
 import { StaffCard } from '../../components/booking/StaffCard';
 import { ProfileScreenSkeleton } from '../../components/ui/SkeletonLoader';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { PremiumCard } from '../../components/ui/PremiumCard';
+import AnimatedPressable from '../../components/ui/AnimatedPressable';
 
 export default function BookingSelectStaffScreen({ navigation, route }: any) {
     const { businessId, businessName, service } = route.params;
@@ -59,19 +62,21 @@ export default function BookingSelectStaffScreen({ navigation, route }: any) {
                 </View>
             </View>
 
-            <TouchableOpacity
-                style={[styles.anyStaffBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            <AnimatedPressable
+                style={{ marginHorizontal: 20, marginVertical: 10 }}
                 onPress={() => handleSelect(null)}
             >
-                <View style={[styles.anyStaffIcon, { backgroundColor: colors.accentDim }]}>
-                    <Feather name="users" size={20} color={colors.accent} />
-                </View>
-                <View style={styles.anyStaffTextCol}>
-                    <Text style={[styles.anyStaffTitle, { color: colors.textPrimary }]}>Cualquier barbero disponible</Text>
-                    <Text style={[styles.anyStaffSubtitle, { color: colors.textMuted }]}>Asignación automática rápida</Text>
-                </View>
-                <Feather name="chevron-right" size={20} color={colors.textMuted} />
-            </TouchableOpacity>
+                <PremiumCard style={[styles.anyStaffBtn, { padding: 16 }]}>
+                    <View style={[styles.anyStaffIcon, { backgroundColor: colors.accentDim }]}>
+                        <Feather name="users" size={20} color={colors.accent} />
+                    </View>
+                    <View style={styles.anyStaffTextCol}>
+                        <Text style={[styles.anyStaffTitle, { color: colors.textPrimary }]}>Cualquier barbero disponible</Text>
+                        <Text style={[styles.anyStaffSubtitle, { color: colors.textMuted }]}>Asignación automática rápida</Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color={colors.textMuted} />
+                </PremiumCard>
+            </AnimatedPressable>
 
             <View style={styles.listHeader}>
                 <Text style={[styles.listHeaderTitle, { color: colors.textSecondary }]}>NUESTRO EQUIPO</Text>
@@ -90,9 +95,11 @@ export default function BookingSelectStaffScreen({ navigation, route }: any) {
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    <View style={styles.empty}>
-                        <Text style={{ color: colors.textMuted }}>No hay barberos disponibles.</Text>
-                    </View>
+                    <EmptyState
+                        icon="person-outline"
+                        title="Sin personal"
+                        subtitle="No hay barberos disponibles para esta barbería."
+                    />
                 }
             />
         </SafeAreaView>
@@ -140,11 +147,6 @@ const styles = StyleSheet.create({
     anyStaffBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: 20,
-        marginVertical: 10,
-        padding: 16,
-        borderRadius: 18,
-        borderWidth: 1.5,
         gap: 14,
     },
     anyStaffIcon: {

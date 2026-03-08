@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useBusinessDetail } from '../../hooks/useBusinessDetail';
 import { SkeletonBox } from '../../components/ui/SkeletonBox';
+import { GradientButton } from '../../components/ui/GradientButton';
 
 export default function BusinessDetailScreen({ route, navigation }: any) {
     const { businessId } = route.params;
@@ -100,13 +101,11 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
             </ScrollView>
 
             <View style={[styles.footer, { paddingBottom: insets.bottom + 20, backgroundColor: colors.surface }]}>
-                <TouchableOpacity
-                    style={[styles.bookBtn, { backgroundColor: colors.accent }]}
+                <GradientButton
+                    label="RESERVAR TURNO"
                     onPress={handleBooking}
-                >
-                    <Text style={[styles.bookBtnText, { color: isDark ? '#0D0D1A' : '#FFFFFF' }]}>RESERVAR TURNO</Text>
-                    <Feather name="calendar" size={18} color={isDark ? '#0D0D1A' : '#FFFFFF'} />
-                </TouchableOpacity>
+                    icon="calendar-outline"
+                />
             </View>
         </View>
     );

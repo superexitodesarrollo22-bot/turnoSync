@@ -5,6 +5,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../services/supabase';
 import { ServiceCard } from '../../components/booking/ServiceCard';
 import { ServicesScreenSkeleton } from '../../components/ui/SkeletonLoader';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export default function BookingSelectServiceScreen({ navigation, route }: any) {
     const { businessId, businessName } = route.params;
@@ -72,9 +73,11 @@ export default function BookingSelectServiceScreen({ navigation, route }: any) {
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    <View style={styles.empty}>
-                        <Text style={{ color: colors.textMuted }}>No hay servicios disponibles.</Text>
-                    </View>
+                    <EmptyState
+                        icon="cut-outline"
+                        title="Sin servicios"
+                        subtitle="Esta barbería no tiene servicios disponibles por el momento."
+                    />
                 }
             />
         </SafeAreaView>
