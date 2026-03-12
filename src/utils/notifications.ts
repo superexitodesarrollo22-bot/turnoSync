@@ -28,6 +28,11 @@ export async function registerClientPushToken(userId: string): Promise<string | 
         return null;
     }
 
+    if (isExpoGo) {
+        console.log('[Push] Expo Go: remote push no disponible desde SDK 53. Usa un Development Build.');
+        return null;
+    }
+
     // Pedir/verificar permisos
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
