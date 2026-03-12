@@ -29,7 +29,7 @@ export async function registerClientPushToken(userId: string): Promise<string | 
     }
 
     if (isExpoGo) {
-        console.log('[Push] Expo Go: remote push no disponible desde SDK 53. Usa un Development Build.');
+        console.log('[Push] Expo Go: remote push no disponible desde SDK 53.');
         return null;
     }
 
