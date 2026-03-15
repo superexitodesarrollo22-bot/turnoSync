@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -9,8 +9,10 @@ import {
     Modal,
     Alert,
     Linking,
-    Share
+    Share,
+    Switch
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
@@ -18,7 +20,6 @@ import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
 import { ProfileScreenSkeleton } from '../../components/ui/SkeletonLoader';
-import { AppLogo } from '../../components/ui/AppLogo';
 
 export default function ProfileScreen({ navigation }: any) {
     const insets = useSafeAreaInsets();
@@ -28,6 +29,7 @@ export default function ProfileScreen({ navigation }: any) {
     const { showToast } = useToast();
 
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [showNotifsModal, setShowNotifsModal] = useState(false);
 
     if (loading) {
         return (
@@ -44,6 +46,25 @@ export default function ProfileScreen({ navigation }: any) {
             showToast({ type: 'error', message: 'No se pudo abrir el enlace.' })
         );
     };
+
+    const [notifsEnabled, setNotifsEnabled] = useState(true);
+
+    useEffect(() => {
+        AsyncStorage.getItem('notifs_enabled').then(val => {
+            if (val !== null) setNotifsEnabled(val === 'true');
+        });
+    }, []);
+
+    const handleToggleNotifs = async (val: boolean) => {
+        setNotifsEnabled(val);
+        await AsyncStorage.setItem('notifs_enabled', val.toString());
+        showToast({
+            type: 'success',
+            message: val ? 'Notificaciones activadas' : 'Notificaciones desactivadas',
+        });
+    };
+
+    const handleNotificaciones = () => setShowNotifsModal(true);
 
     const renderSectionTitle = (title: string) => (
         <Text style={[styles.sectionTitleText, { color: colors.textMuted }]}>
@@ -90,12 +111,6 @@ export default function ProfileScreen({ navigation }: any) {
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
             <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Branding Header */}
-                <View style={styles.brandingHeader}>
-                    <AppLogo size={40} iconSize={18} />
-                    <Text style={[styles.brandingTitle, { color: colors.textPrimary }]}>TurnoSync</Text>
-                </View>
-
                 {/* Header Profile */}
                 <View style={styles.profileHeader}>
                     <View style={[
@@ -132,12 +147,19 @@ export default function ProfileScreen({ navigation }: any) {
                 {/* Menu Sections */}
                 {renderSectionTitle('Configuración')}
                 <View style={styles.menuSection}>
-                    {renderMenuItem('shopping-bag', 'Comprar TurnoSync', false, () => Share.share({ message: 'Descargá TurnoSync y reservá tu turno en segundos 💈 https://turnosync.app' }))}
-                    {renderMenuItem('globe', 'Idioma', false, () => showToast({ type: 'info', message: 'Cambio de idioma disponible pronto.' }))}
-                    {renderMenuItem('bell', 'Notificaciones', false, () => showToast({ type: 'info', message: 'Notificaciones disponibles pronto.' }))}
-                    {renderMenuItem('shield', 'Política de privacidad', false, () => handleOpenURL('https://turnosync.app/privacidad'))}
-                    {renderMenuItem('file-text', 'Términos y condiciones', false, () => handleOpenURL('https://turnosync.app/terminos'))}
-                    {renderMenuItem('credit-card', 'Términos de la Suscripción', false, () => handleOpenURL('https://turnosync.app/suscripcion'))}
+                    {renderMenuItem('share-2', 'Compartir TurnoSync', false, () =>
+                        Share.share({
+                            message: 'Reserva tu turno en segundos con TurnoSync https://turnosync.app',
+                            title: 'TurnoSync',
+                        })
+                    )}
+                    {renderMenuItem('bell', 'Notificaciones', false, handleNotificaciones)}
+                    {renderMenuItem('shield', 'Política de privacidad', false, () =>
+                        handleOpenURL('https://zyntechsolutions.netlify.app/privacidad_turno')
+                    )}
+                    {renderMenuItem('file-text', 'Términos y condiciones', false, () =>
+                        handleOpenURL('https://zyntechsolutions.netlify.app/condiciones_turno')
+                    )}
                 </View>
 
                 <View style={styles.menuSection}>
@@ -168,6 +190,67 @@ export default function ProfileScreen({ navigation }: any) {
                             onPress={() => setShowLogoutModal(false)}
                         >
                             <Text style={{ color: colors.textSecondary, fontSize: 15 }}>Cancelar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Modal Notificaciones */}
+            <Modal
+                visible={showNotifsModal}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+                onRequestClose={() => setShowNotifsModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalBox, { backgroundColor: colors.surface }]}>
+                        <View style={[styles.modalIconWrap, { backgroundColor: colors.accentDim }]}>
+                            <Feather name="bell" size={28} color={colors.accent} />
+                        </View>
+                        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                            Notificaciones
+                        </Text>
+
+                        {/* Toggle principal */}
+                        <View style={[styles.notifRow, { borderColor: colors.divider }]}>
+                            <View style={styles.notifRowLeft}>
+                                <Feather name="bell" size={18} color={colors.accent} style={{ marginRight: 12 }} />
+                                <View>
+                                    <Text style={[styles.notifRowTitle, { color: colors.textPrimary }]}>
+                                        Recibir notificaciones
+                                    </Text>
+                                    <Text style={[styles.notifRowSub, { color: colors.textSecondary }]}>
+                                        Recordatorios de tus turnos
+                                    </Text>
+                                </View>
+                            </View>
+                            <Switch
+                                value={notifsEnabled}
+                                onValueChange={async (val) => {
+                                    setNotifsEnabled(val);
+                                    await AsyncStorage.setItem('notifs_enabled', val.toString());
+                                }}
+                                trackColor={{ false: colors.divider, true: colors.accent }}
+                                thumbColor="#fff"
+                            />
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.notifSettingsBtn, { borderColor: colors.border }]}
+                            onPress={() => { setShowNotifsModal(false); Linking.openSettings(); }}
+                        >
+                            <Feather name="settings" size={16} color={colors.textSecondary} style={{ marginRight: 8 }} />
+                            <Text style={[styles.notifSettingsBtnText, { color: colors.textSecondary }]}>
+                                Configuración del sistema
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.modalBtnPrimary, { backgroundColor: colors.accent, marginTop: 8 }]}
+                            onPress={() => setShowNotifsModal(false)}
+                        >
+                            <Text style={[styles.modalBtnPrimaryText, { color: '#0D0D1A' }]}>Listo</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -280,5 +363,67 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    modalIconWrap: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    notifRow: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 16,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        marginBottom: 16,
+    },
+    notifRowLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    notifRowTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    notifRowSub: {
+        fontSize: 12,
+        marginTop: 2,
+    },
+    notifSettingsBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        width: '100%',
+        marginBottom: 16,
+    },
+    notifSettingsBtnText: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    modalBtnPrimary: {
+        width: '100%',
+        height: 52,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalBtnPrimaryText: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    modalBox: {
+        borderRadius: 24,
+        padding: 28,
+        width: '100%',
+        alignItems: 'center',
     },
 });

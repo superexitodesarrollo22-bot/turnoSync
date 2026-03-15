@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -26,8 +27,19 @@ export default function HomeScreen({ navigation }: any) {
     const insets = useSafeAreaInsets();
     const { colors, isDark } = useTheme();
     const [searchQuery, setSearchQuery] = useState('');
-    const { businesses, loading: bizLoading, error: bizError } = useBusinesses(searchQuery);
+    const {
+        businesses,
+        loading: bizLoading,
+        error: bizError,
+        refetch
+    } = useBusinesses(searchQuery);
     const { user, loading: userLoading } = useCurrentUser();
+
+    useFocusEffect(
+        useCallback(() => {
+            refetch();
+        }, [refetch])
+    );
 
     if (userLoading) {
         return (
@@ -37,55 +49,57 @@ export default function HomeScreen({ navigation }: any) {
         );
     }
 
-    const renderBusinessCard = ({ item, index }: { item: any, index: number }) => (
-        <FadeInView delay={index * 60}>
-            <AnimatedPressable
-                onPress={() => navigation.navigate('BusinessProfile', { businessId: item.id })}
-                style={{ marginBottom: 16 }}
+    const renderBusinessCard = ({ item, index }: { item: any; index: number }) => (
+        <FadeInView delay={index * 60} style={{ marginBottom: 10 }}>
+            <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id })}
+                style={[
+                    styles.bCard,
+                    {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                    },
+                ]}
             >
-                <PremiumCard elevated style={{ overflow: 'hidden', padding: 0 }}>
-                    {/* Área de imagen/logo */}
-                    <View style={[styles.cardImageArea, { backgroundColor: colors.surfaceElevated }]}>
-                        {item.logo_url
-                            ? <Image source={{ uri: item.logo_url }} style={styles.cardImage} resizeMode="cover" />
-                            : <Feather name="scissors" size={32} color={colors.accent} />
-                        }
-                        <View style={[styles.statusBadge, { backgroundColor: '#4CAF50' }]}>
-                            <Text style={styles.statusText}>Abierto</Text>
-                        </View>
-                    </View>
-
-                    {/* Cuerpo */}
-                    <View style={styles.cardBody}>
-                        <Text style={[styles.businessName, { color: colors.textPrimary }]}>
-                            {item.name}
-                        </Text>
-
-                        {item.description ? (
-                            <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
-                                {item.description}
-                            </Text>
-                        ) : null}
-
-                        {item.address ? (
-                            <View style={styles.infoRow}>
-                                <Feather name="map-pin" size={13} color={colors.accent} style={styles.infoIcon} />
-                                <Text style={[styles.infoText, { color: colors.textSecondary }]} numberOfLines={1}>
-                                    {item.address}
-                                </Text>
-                            </View>
-                        ) : null}
-
-                        {/* Botón reservar */}
-                        <GradientButton
-                            label="Reservar turno"
-                            onPress={() => navigation.navigate('BusinessProfile', { businessId: item.id })}
-                            size="sm"
-                            style={{ marginTop: 12 }}
+                <View style={[styles.bCardIcon, { backgroundColor: colors.accentDim }]}>
+                    {item.logo_url ? (
+                        <Image
+                            source={{ uri: item.logo_url }}
+                            style={styles.bCardIconImg}
                         />
-                    </View>
-                </PremiumCard>
-            </AnimatedPressable>
+                    ) : (
+                        <Feather name="scissors" size={18} color={colors.accent} />
+                    )}
+                </View>
+                <View style={styles.bCardInfo}>
+                    <Text
+                        style={[styles.bCardName, { color: colors.textPrimary }]}
+                        numberOfLines={1}
+                    >
+                        {item.name}
+                    </Text>
+                    {item.address ? (
+                        <View style={styles.bCardRow}>
+                            <Feather
+                                name="map-pin"
+                                size={11}
+                                color={colors.textMuted}
+                                style={{ marginRight: 4 }}
+                            />
+                            <Text
+                                style={[styles.bCardAddr, { color: colors.textMuted }]}
+                                numberOfLines={1}
+                            >
+                                {item.address}
+                            </Text>
+                        </View>
+                    ) : null}
+                </View>
+                <View style={[styles.bCardBtn, { backgroundColor: colors.accent }]}>
+                    <Text style={styles.bCardBtnText}>Reservar</Text>
+                </View>
+            </TouchableOpacity>
         </FadeInView>
     );
 
@@ -155,7 +169,25 @@ export default function HomeScreen({ navigation }: any) {
             {/* List */}
             {bizLoading && businesses.length === 0 ? (
                 <View style={[styles.listContent, { paddingTop: 16 }]}>
-                    {[1, 2, 3].map(i => <BusinessCardSkeleton key={i} />)}
+                    {[1, 2, 3].map(i => (
+                        <View key={i} style={[styles.bCard, {
+                            backgroundColor: colors.surfaceElevated || colors.surface,
+                            borderColor: colors.border,
+                            marginBottom: 10,
+                            opacity: 0.5,
+                        }]}>
+                            <View style={{ width: 42, height: 42, borderRadius: 21,
+                                backgroundColor: colors.divider }} />
+                            <View style={{ flex: 1, gap: 6 }}>
+                                <View style={{ height: 14, width: '60%', borderRadius: 7,
+                                    backgroundColor: colors.divider }} />
+                                <View style={{ height: 11, width: '40%', borderRadius: 6,
+                                    backgroundColor: colors.divider }} />
+                            </View>
+                            <View style={{ width: 72, height: 34, borderRadius: 10,
+                                backgroundColor: colors.divider }} />
+                        </View>
+                    ))}
                 </View>
             ) : businesses.length === 0 && !bizLoading ? (
                 <EmptyState
@@ -167,9 +199,10 @@ export default function HomeScreen({ navigation }: any) {
                 <FlatList
                     data={businesses}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.listContent}
+                    contentContainerStyle={[styles.listContent, { paddingBottom: 40 }]}
                     showsVerticalScrollIndicator={false}
                     renderItem={renderBusinessCard}
+                    onEndReachedThreshold={0.3}
                 />
             )}
         </View>
@@ -267,69 +300,105 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingHorizontal: 20,
-        paddingBottom: 100,
+        paddingBottom: 40,
     },
-    card: {
-        borderRadius: 16,
-        marginBottom: 16,
-        overflow: 'hidden',
-        borderWidth: 1,
+    cardRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 14,
+        paddingVertical: 14,
+        gap: 12,
     },
-    cardImageArea: {
-        height: 130,
+    cardIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
+        flexShrink: 0,
     },
-    cardImage: {
-        width: '100%',
-        height: '100%',
+    cardIconImg: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
     },
-    statusBadge: {
-        position: 'absolute',
-        top: 12,
-        right: 12,
-        borderRadius: 20,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-    },
-    statusText: {
-        color: 'white',
-        fontSize: 11,
-        fontWeight: 'bold',
-    },
-    cardBody: {
-        padding: 16,
+    cardInfo: {
+        flex: 1,
+        gap: 3,
     },
     businessName: {
-        fontSize: 17,
-        fontWeight: 'bold',
-        marginBottom: 6,
+        fontSize: 15,
+        fontWeight: '700',
     },
     infoRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 4,
     },
     infoIcon: {
-        marginRight: 6,
+        marginRight: 4,
     },
     infoText: {
-        fontSize: 13,
-        flexShrink: 1,
-    },
-    description: {
         fontSize: 12,
-        marginBottom: 12,
+        flexShrink: 1,
     },
     reserveBtn: {
         borderRadius: 10,
-        height: 44,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        flexShrink: 0,
     },
     reserveBtnText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#0D0D1A',
+    },
+    bCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 14,
+        borderWidth: 1,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        gap: 12,
+    },
+    bCardIcon: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexShrink: 0,
+    },
+    bCardIconImg: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+    },
+    bCardInfo: {
+        flex: 1,
+        gap: 3,
+    },
+    bCardName: {
         fontSize: 15,
-        fontWeight: 'bold',
+        fontWeight: '700',
+    },
+    bCardRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    bCardAddr: {
+        fontSize: 12,
+        flexShrink: 1,
+    },
+    bCardBtn: {
+        borderRadius: 10,
+        paddingHorizontal: 13,
+        paddingVertical: 8,
+        flexShrink: 0,
+    },
+    bCardBtnText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#0D0D1A',
     },
 });

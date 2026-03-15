@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, Linking, Modal } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useToast } from '../../hooks/useToast';
-import { supabase } from '../../services/supabase';
+import { supabase } from '../../config/supabase';
 import { formatFullDate, formatPrice, getStatusLabel, formatShortDate } from '../../utils/bookingHelpers';
 import { GradientHeader } from '../../components/ui/GradientHeader';
 import { PremiumCard } from '../../components/ui/PremiumCard';
@@ -17,6 +17,7 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
     const [appointment, setAppointment] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [cancelling, setCancelling] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
 
     const fetchDetail = async () => {
         setLoading(true);
@@ -46,32 +47,26 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
         fetchDetail();
     }, [appointmentId]);
 
-    const handleCancel = async () => {
-        Alert.alert(
-            'Cancelar turno',
-            '¿Estás seguro? Esta acción no se puede deshacer.',
-            [
-                { text: 'No, mantener', style: 'cancel' },
-                {
-                    text: 'Sí, cancelar turno',
-                    style: 'destructive',
-                    onPress: async () => {
-                        setCancelling(true);
-                        try {
-                            const { error: cancelError } = await supabase.rpc('cancel_appointment', { p_appointment_id: appointmentId });
-                            if (cancelError) throw cancelError;
+    const handleCancel = () => {
+        setShowCancelModal(true);
+    };
 
-                            showToast({ type: 'success', message: 'Tu turno ha sido cancelado.' });
-                            navigation.goBack();
-                        } catch (e: any) {
-                            showToast({ type: 'error', message: e.message });
-                        } finally {
-                            setCancelling(false);
-                        }
-                    }
-                }
-            ]
-        );
+    const confirmCancel = async () => {
+        setShowCancelModal(false);
+        setCancelling(true);
+        try {
+            const { error: cancelError } = await supabase.rpc(
+                'cancel_appointment',
+                { p_appointment_id: appointmentId }
+            );
+            if (cancelError) throw cancelError;
+            showToast({ type: 'success', message: 'Tu turno ha sido cancelado.' });
+            navigation.goBack();
+        } catch (e: any) {
+            showToast({ type: 'error', message: e.message });
+        } finally {
+            setCancelling(false);
+        }
     };
 
     if (loading) {
@@ -173,7 +168,13 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.contactBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                        onPress={() => Linking.openURL(`https://wa.me/54${appointment.businesses?.whatsapp}`)}
+                        onPress={() => {
+                            const raw = appointment.businesses?.whatsapp ?? appointment.businesses?.phone ?? '';
+                            // Limpiar: quitar +, espacios, guiones
+                            const clean = raw.replace(/[^0-9]/g, '');
+                            if (!clean) return;
+                            Linking.openURL(`https://wa.me/${clean}`);
+                        }}
                     >
                         <Feather name="message-circle" size={20} color="#25D366" />
                         <Text style={[styles.contactBtnText, { color: colors.textPrimary }]}>WhatsApp</Text>
@@ -191,6 +192,47 @@ export default function AppointmentDetailScreen({ navigation, route }: any) {
                     />
                 )}
             </ScrollView>
+
+            {/* Modal Cancelar Turno */}
+            <Modal
+                visible={showCancelModal}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+                onRequestClose={() => setShowCancelModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalBox, { backgroundColor: colors.surface }]}>
+                        <View style={[styles.modalIconWrap, { backgroundColor: 'rgba(217,48,37,0.1)' }]}>
+                            <Feather name="x-circle" size={32} color={colors.error} />
+                        </View>
+                        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                            Cancelar turno
+                        </Text>
+                        <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                            Esta acción no se puede deshacer. El turno quedará cancelado.
+                        </Text>
+                        <TouchableOpacity
+                            style={[styles.modalBtnPrimary, { backgroundColor: colors.error }]}
+                            onPress={confirmCancel}
+                            disabled={cancelling}
+                        >
+                            {cancelling
+                                ? <ActivityIndicator color="#fff" size="small" />
+                                : <Text style={styles.modalBtnPrimaryText}>Sí, cancelar turno</Text>
+                            }
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.modalBtnSecondary}
+                            onPress={() => setShowCancelModal(false)}
+                        >
+                            <Text style={[styles.modalBtnSecondaryText, { color: colors.textSecondary }]}>
+                                No, mantener turno
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -356,5 +398,61 @@ const styles = StyleSheet.create({
     cancelBtnText: {
         fontSize: 15,
         fontWeight: '800',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.55)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 28,
+    },
+    modalBox: {
+        borderRadius: 24,
+        padding: 28,
+        width: '100%',
+        alignItems: 'center',
+    },
+    modalIconWrap: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 18,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    modalSubtitle: {
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 28,
+    },
+    modalBtnPrimary: {
+        width: '100%',
+        height: 52,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    modalBtnPrimaryText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    modalBtnSecondary: {
+        width: '100%',
+        height: 48,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalBtnSecondaryText: {
+        fontSize: 15,
+        fontWeight: '600',
     }
 });

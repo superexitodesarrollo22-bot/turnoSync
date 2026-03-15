@@ -86,7 +86,7 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
                             </View>
                             <View style={styles.infoTextCol}>
                                 <Text style={[styles.infoLabel, { color: colors.textMuted }]}>HORARIO</Text>
-                                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>Abierto ahora · Cierra 20:00</Text>
+                                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>Disponible</Text>
                             </View>
                         </View>
                     </View>

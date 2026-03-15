@@ -3,8 +3,9 @@ import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Session } from '@supabase/supabase-js';
-import { supabase } from '../services/supabase';
+import { supabase } from '../config/supabase';
 import { registerClientPushToken } from '../utils/notifications';
+import { clearAppointmentsCache } from '../hooks/useMyAppointments';
 
 // 🔴 CRÍTICO: Esto debe estar aquí, no en supabase.ts
 WebBrowser.maybeCompleteAuthSession();
@@ -58,7 +59,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
         // Escucha cambios de auth
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+
+            if (event === 'SIGNED_OUT') {
+                setSession(null);
+                setProfile(null);
+                setLoading(false);
+                return;
+            }
+
             setSession(session);
 
             if (session?.user) {
@@ -69,14 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     || session.user.user_metadata?.picture
                     || '';
 
-                console.log('[AuthContext] Metadata de Google:', {
-                    full_name: fullName,
-                    avatar_url: avatarUrl,
-                    raw: session.user.user_metadata
-                });
-
-                // Setear perfil INMEDIATAMENTE desde los metadatos de la sesión
-                // para que la UI muestre los datos sin esperar la DB
+                // Perfil inmediato desde metadata
                 setProfile((prev: any) => ({
                     ...(prev ?? {}),
                     supabase_auth_uid: session.user.id,
@@ -85,57 +87,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     avatar_url: avatarUrl,
                 }));
 
-                // En paralelo, sincronizar con la DB y luego reemplazar el perfil
-                // con el registro completo que incluye el campo id de la tabla users
+                // Sincronizar con DB
                 try {
-                    const { error: upsertError } = await supabase
-                        .from('users')
-                        .upsert({
-                            supabase_auth_uid: session.user.id,
-                            email: session.user.email ?? '',
-                            full_name: fullName,
-                            avatar_url: avatarUrl,
-                        }, {
-                            onConflict: 'supabase_auth_uid',
-                            ignoreDuplicates: false
-                        });
+                    await supabase.from('users').upsert({
+                        supabase_auth_uid: session.user.id,
+                        email: session.user.email ?? '',
+                        full_name: fullName,
+                        avatar_url: avatarUrl,
+                    }, { onConflict: 'supabase_auth_uid' });
 
-                    if (upsertError) {
-                        console.error('[AuthContext] Error en upsert:', upsertError.message);
-                    }
-
-                    // Fetch del registro completo para tener el campo id (UUID interno)
-                    const { data: dbProfile, error: fetchError } = await supabase
+                    const { data: dbProfile } = await supabase
                         .from('users')
                         .select('*')
                         .eq('supabase_auth_uid', session.user.id)
                         .single();
 
                     if (dbProfile) {
-                        // Siempre forzar los valores de Google por sobre lo que haya en la DB
-                        // por si la DB tenía valores vacíos de un login anterior
                         setProfile({
                             ...dbProfile,
                             full_name: fullName || dbProfile.full_name,
                             avatar_url: avatarUrl || dbProfile.avatar_url,
                         });
-                        console.log('[AuthContext] Perfil final:', {
-                            full_name: fullName || dbProfile.full_name,
-                            avatar_url: avatarUrl || dbProfile.avatar_url,
-                        });
-
-                        // Registrar token push usando el id interno de la tabla users
-                        registerClientPushToken(dbProfile.id).catch((err) =>
-                            console.log('[Push] No se pudo registrar token:', err)
-                        );
-                    } else if (fetchError) {
-                        console.error('[AuthContext] Error al leer perfil de DB:', fetchError.message);
-                        // El perfil ya fue seteado desde metadata arriba, no hacer nada
+                        registerClientPushToken(dbProfile.id).catch(() => {});
                     }
-
                 } catch (e) {
-                    console.error('[AuthContext] Excepcion en upsert/fetchProfile:', e);
-                    // El perfil ya fue seteado desde metadata arriba, la UI igual funciona
+                    console.error('[AuthContext] Error sync DB:', e);
                 }
             } else {
                 setProfile(null);
@@ -263,11 +239,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const signOut = async () => {
-        console.log('[Auth] Cerrando sesión...');
-        setSession(null);
-        setProfile(null);
-        await supabase.auth.signOut();
-        console.log('[Auth] ✅ Sesión cerrada');
+        try {
+            // Limpiar estado local ANTES de llamar a Supabase
+            // para que la UI reaccione inmediatamente
+            setProfile(null);
+            setSession(null);
+            clearAppointmentsCache();
+
+            // Llamar signOut en Supabase
+            await supabase.auth.signOut({ scope: 'local' });
+        } catch (e) {
+            console.error('[Auth] Error en signOut:', e);
+        }
     };
 
     return (

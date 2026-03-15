@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../services/supabase';
+import { supabase } from '../config/supabase';
 
 interface UseAvailableSlotsParams {
     businessId: string;

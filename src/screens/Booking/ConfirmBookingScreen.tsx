@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
-import { supabase } from '../../services/supabase';
+import { supabase } from '../../config/supabase';
 import { useToast } from '../../hooks/useToast';
 
 export default function ConfirmBookingScreen({ route, navigation }: any) {

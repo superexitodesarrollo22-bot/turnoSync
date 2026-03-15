@@ -1,27 +1,21 @@
 import * as Notifications from 'expo-notifications';
-import { supabase } from '../config/supabase';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-// ─── Local Notifications ──────────────────────────────
+const isExpoGo =
+    Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
-/**
- * Send a local push notification on this device.
- */
-export async function sendLocalNotification(title: string, body: string): Promise<void> {
+export async function sendLocalNotification(
+    title: string,
+    body: string
+): Promise<void> {
+    if (isExpoGo) return;
     try {
         await Notifications.scheduleNotificationAsync({
-            content: {
-                title,
-                body,
-                sound: true,
-            },
-            trigger: null, // immediate
+            content: { title, body, sound: true },
+            trigger: null,
         });
-    } catch (err) {
-        console.warn('[notifications] sendLocal error:', err);
-    }
+    } catch { }
 }
-
-// ─── Client Notifications ─────────────────────────────
 
 export async function notifyBookingConfirmed(
     businessName: string,
@@ -30,8 +24,8 @@ export async function notifyBookingConfirmed(
     timeLabel: string
 ): Promise<void> {
     await sendLocalNotification(
-        '✅ ¡Turno reservado!',
-        `${businessName} · ${serviceName}\n${dateLabel} a las ${timeLabel}`
+        'Turno reservado',
+        `${businessName} - ${serviceName}\n${dateLabel} a las ${timeLabel}`
     );
 }
 
@@ -45,6 +39,3 @@ export async function notifyBookingCancelled(
         `Tu turno del ${dateLabel} a las ${timeLabel} en ${businessName} fue cancelado.`
     );
 }
-
-
-

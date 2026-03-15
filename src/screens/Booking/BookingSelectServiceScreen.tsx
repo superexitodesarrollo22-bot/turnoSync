@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
-import { supabase } from '../../services/supabase';
+import { supabase } from '../../config/supabase';
 import { ServiceCard } from '../../components/booking/ServiceCard';
 import { ServicesScreenSkeleton } from '../../components/ui/SkeletonLoader';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -12,6 +13,7 @@ export default function BookingSelectServiceScreen({ navigation, route }: any) {
     const { colors, isDark } = useTheme();
     const [services, setServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const insets = useSafeAreaInsets();
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -45,7 +47,7 @@ export default function BookingSelectServiceScreen({ navigation, route }: any) {
     if (loading) return <ServicesScreenSkeleton />;
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Feather name="arrow-left" size={24} color={colors.textPrimary} />
@@ -71,6 +73,7 @@ export default function BookingSelectServiceScreen({ navigation, route }: any) {
                     />
                 )}
                 contentContainerStyle={styles.list}
+                ItemSeparatorComponent={() => <View style={{ height: 0 }} />}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <EmptyState

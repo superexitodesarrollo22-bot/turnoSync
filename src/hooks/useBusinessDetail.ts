@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../services/supabase';
+import { supabase } from '../config/supabase';
 
 export const useBusinessDetail = (businessId: string) => {
     const [business, setBusiness] = useState<any>(null);

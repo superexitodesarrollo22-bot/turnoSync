@@ -55,6 +55,20 @@ export default function MyAppointmentsScreen({ navigation }: any) {
         </View>
     );
 
+    const renderSkeleton = () => (
+        <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
+            {[1, 2, 3].map(i => (
+                <View key={i} style={[{
+                    height: 80,
+                    borderRadius: 14,
+                    backgroundColor: colors.surfaceElevated,
+                    marginBottom: 10,
+                    opacity: 0.5,
+                }]} />
+            ))}
+        </View>
+    );
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.screenHeader}>
@@ -63,22 +77,28 @@ export default function MyAppointmentsScreen({ navigation }: any) {
 
             {renderHeader()}
 
-            <FlatList
-                data={appointments}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <AppointmentCard
-                        appointment={item}
-                        onPress={() => navigation.navigate('AppointmentDetail', { appointmentId: item.id })}
-                    />
-                )}
-                contentContainerStyle={styles.list}
-                ListEmptyComponent={renderEmpty}
-                refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={colors.accent} />
-                }
-                showsVerticalScrollIndicator={false}
-            />
+            {loading && appointments.length === 0 ? renderSkeleton() : (
+                <FlatList
+                    data={appointments}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <AppointmentCard
+                            appointment={item}
+                            onPress={() => navigation.navigate('AppointmentDetail', { appointmentId: item.id })}
+                        />
+                    )}
+                    contentContainerStyle={styles.list}
+                    ListEmptyComponent={loading ? null : renderEmpty}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={loading && appointments.length > 0}
+                            onRefresh={refetch}
+                            tintColor={colors.accent}
+                        />
+                    }
+                    showsVerticalScrollIndicator={false}
+                />
+            )}
         </SafeAreaView>
     );
 }

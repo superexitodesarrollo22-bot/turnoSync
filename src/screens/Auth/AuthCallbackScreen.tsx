@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useTheme } from '../../hooks/useTheme';
-import { supabase } from '../../services/supabase';
+import { supabase } from '../../config/supabase';
 import { StatusBar } from 'expo-status-bar';
 
 export default function AuthCallbackScreen() {

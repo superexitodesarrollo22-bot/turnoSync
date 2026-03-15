@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
-import { supabase } from '../../services/supabase';
+import { supabase } from '../../config/supabase';
 import { DatePicker } from '../../components/booking/DatePicker';
 import { formatFullDate } from '../../utils/bookingHelpers';
 import { GradientButton } from '../../components/ui/GradientButton';
@@ -12,6 +13,7 @@ export default function BookingSelectDateScreen({ navigation, route }: any) {
     const { businessId, businessName, service, staff } = route.params;
     const { colors, isDark } = useTheme();
     const [loading, setLoading] = useState(true);
+    const insets = useSafeAreaInsets();
     const [selectedDate, setSelectedDate] = useState('');
     const [config, setConfig] = useState<any>({ max_advance_days: 15 });
     const [blackoutDates, setBlackoutDates] = useState<string[]>([]);
@@ -71,7 +73,7 @@ export default function BookingSelectDateScreen({ navigation, route }: any) {
     const maxDateStr = maxDate.toISOString().split('T')[0];
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Feather name="arrow-left" size={24} color={colors.textPrimary} />
@@ -116,7 +118,10 @@ export default function BookingSelectDateScreen({ navigation, route }: any) {
                 ) : null}
             </ScrollView>
 
-            <View style={[styles.footer, { backgroundColor: colors.surface }]}>
+            <View style={[styles.footer, {
+                backgroundColor: colors.surface,
+                paddingBottom: insets.bottom + 12,
+            }]}>
                 <GradientButton
                     label="Ver horarios disponibles"
                     onPress={handleContinue}
@@ -167,7 +172,7 @@ const styles = StyleSheet.create({
     },
     scroll: {
         padding: 20,
-        paddingBottom: 100,
+        paddingBottom: 140,
     },
     infoBox: {
         flexDirection: 'row',
@@ -206,6 +211,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         padding: 20,
+        paddingBottom: 20,
         borderTopWidth: 1,
         borderTopColor: 'rgba(0,0,0,0.05)',
     },

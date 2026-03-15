@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, SectionList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SectionList, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useAvailableSlots } from '../../hooks/useAvailableSlots';
@@ -11,6 +12,7 @@ import { formatFullDate } from '../../utils/bookingHelpers';
 export default function BookingSelectSlotScreen({ navigation, route }: any) {
     const { businessId, businessName, service, staff, date } = route.params;
     const { colors, isDark } = useTheme();
+    const insets = useSafeAreaInsets();
     const { slots, loading, error, refetch } = useAvailableSlots({
         businessId,
         date,
@@ -31,7 +33,7 @@ export default function BookingSelectSlotScreen({ navigation, route }: any) {
 
     if (loading) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
                 <ActivityIndicator size="large" color={colors.accent} />
                 <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Buscando horarios disponibles...</Text>
             </SafeAreaView>
@@ -40,7 +42,7 @@ export default function BookingSelectSlotScreen({ navigation, route }: any) {
 
     if (!loading && slots.length === 0) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                         <Feather name="arrow-left" size={24} color={colors.textPrimary} />
@@ -66,7 +68,7 @@ export default function BookingSelectSlotScreen({ navigation, route }: any) {
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Feather name="arrow-left" size={24} color={colors.textPrimary} />

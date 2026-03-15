@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { formatFullDate } from '../../utils/bookingHelpers';
@@ -14,8 +15,10 @@ export default function BookingSuccessScreen({ navigation, route }: any) {
     const dateLabel = formatFullDate(appointment.start_at.split('T')[0]);
     const timeLabel = startAt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
+    const insets = useSafeAreaInsets();
+
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.centerContent}>
                 <View style={[styles.successCircle, { backgroundColor: colors.accentDim }]}>
                     <Feather name="check" size={50} color={colors.accent} />

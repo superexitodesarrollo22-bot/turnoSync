@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
-import { supabase } from '../../services/supabase';
+import { supabase } from '../../config/supabase';
 import { StaffCard } from '../../components/booking/StaffCard';
 import { ProfileScreenSkeleton } from '../../components/ui/SkeletonLoader';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -14,6 +15,7 @@ export default function BookingSelectStaffScreen({ navigation, route }: any) {
     const { colors, isDark } = useTheme();
     const [staff, setStaff] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const insets = useSafeAreaInsets();
 
     useEffect(() => {
         const fetchStaff = async () => {
@@ -48,7 +50,7 @@ export default function BookingSelectStaffScreen({ navigation, route }: any) {
     if (loading) return <ProfileScreenSkeleton />;
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Feather name="arrow-left" size={24} color={colors.textPrimary} />

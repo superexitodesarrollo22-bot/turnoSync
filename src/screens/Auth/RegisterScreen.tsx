@@ -11,7 +11,7 @@ import {
     KeyboardAvoidingView,
     Platform
 } from 'react-native';
-import { supabase } from '../../services/supabase';
+import { supabase } from '../../config/supabase';
 import { useTheme } from '../../hooks/useTheme';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';

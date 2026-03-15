@@ -10,6 +10,9 @@ import SplashAnimatedScreen from './src/screens/SplashAnimatedScreen';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Linking from 'expo-linking';
+import { initNotifications } from './src/utils/notifications';
+
+initNotifications();
 
 const Stack = createNativeStackNavigator();
 

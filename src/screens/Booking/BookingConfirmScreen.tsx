@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useBookAppointment } from '../../hooks/useBookAppointment';
@@ -12,6 +13,7 @@ export default function BookingConfirmScreen({ navigation, route }: any) {
     const { businessId, businessName, service, staff, date, slot } = route.params;
     const { colors, isDark } = useTheme();
     const { bookAppointment, loading, error } = useBookAppointment();
+    const insets = useSafeAreaInsets();
     const [notes, setNotes] = useState('');
     const { showToast } = useToast();
 
@@ -25,11 +27,13 @@ export default function BookingConfirmScreen({ navigation, route }: any) {
         });
 
         if (result) {
+            showToast({ type: 'success', message: 'Turno reservado exitosamente' });
+            // Ir directo a Mis Turnos limpiando el stack del wizard
             navigation.reset({
                 index: 0,
                 routes: [{
-                    name: 'BookingSuccess',
-                    params: { appointment: result }
+                    name: 'MainTabs',
+                    params: { screen: 'MyBookings' }
                 }]
             });
         } else if (error) {
@@ -38,7 +42,7 @@ export default function BookingConfirmScreen({ navigation, route }: any) {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Feather name="arrow-left" size={24} color={colors.textPrimary} />

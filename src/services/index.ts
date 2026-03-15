@@ -1,4 +1,4 @@
-export { supabase } from './supabase';
+export { supabase } from '../config/supabase';
 export * from './businesses.service';
 export * from './appointments.service';
 export * from './slots.service';

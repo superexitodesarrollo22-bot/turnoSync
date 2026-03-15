@@ -10,7 +10,7 @@ interface FadeInViewProps {
 
 export default function FadeInView({ children, delay = 0, duration = 300, style }: FadeInViewProps) {
     const opacityAnim = useRef(new Animated.Value(0)).current;
-    const translateYAnim = useRef(new Animated.Value(16)).current;
+    const translateYAnim = useRef(new Animated.Value(8)).current;
 
     useEffect(() => {
         Animated.parallel([
