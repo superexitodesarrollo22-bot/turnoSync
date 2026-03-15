@@ -7,7 +7,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import AuthCallbackScreen from './src/screens/Auth/AuthCallbackScreen';
 import SplashAnimatedScreen from './src/screens/SplashAnimatedScreen';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Linking from 'expo-linking';
 import { initNotifications } from './src/utils/notifications';
@@ -18,9 +18,9 @@ const Stack = createNativeStackNavigator();
 
 const linking = {
   prefixes: [
-    'turnosync://', // Producción
-    'exp://', // Desarrollo  
-    Linking.createURL('/'), // Expo Go dynamic
+    'turnosync://',
+    'exp://',
+    Linking.createURL('/'),
   ],
   config: {
     screens: {
@@ -31,8 +31,22 @@ const linking = {
 
 function RootNavigator() {
   const { session, loading } = useAuth();
+  // splashDone: solo controla si se mostro la animacion inicial
+  // Se resetea cuando session cambia a null (cierre de sesion)
   const [splashDone, setSplashDone] = React.useState(false);
+  const prevSessionRef = React.useRef(session);
 
+  // Cuando la sesion pasa de algo a null (cierre de sesion),
+  // resetear splashDone para que no quede en limbo
+  React.useEffect(() => {
+    if (prevSessionRef.current !== null && session === null && !loading) {
+      // El usuario cerro sesion -> no mostrar splash, ir directo a Auth
+      setSplashDone(true);
+    }
+    prevSessionRef.current = session;
+  }, [session, loading]);
+
+  // Mientras AuthContext inicializa, mostrar spinner
   if (loading) {
     return (
       <View style={styles.container}>
@@ -41,10 +55,12 @@ function RootNavigator() {
     );
   }
 
+  // Primera apertura de la app sin sesion -> mostrar splash
   if (!session && !splashDone) {
     return <SplashAnimatedScreen onFinish={() => setSplashDone(true)} />;
   }
 
+  // Con o sin sesion, renderizar el navigator correcto
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {session ? (
@@ -81,16 +97,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#0D0D1A',
-  },
-  text: {
-    marginTop: 16,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  subtext: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#A0A0A0',
   },
 });

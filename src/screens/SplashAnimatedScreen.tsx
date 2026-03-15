@@ -14,6 +14,8 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
     const logoOpacity = useRef(new Animated.Value(0)).current;
     const titleOpacity = useRef(new Animated.Value(0)).current;
     const footerOpacity = useRef(new Animated.Value(0)).current;
+    const taglineOpacity = useRef(new Animated.Value(0)).current;
+    const featuresOpacity = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         Animated.sequence([
@@ -23,13 +25,17 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
                 Animated.timing(lineScale, { toValue: 1, duration: 800, useNativeDriver: true }),
             ]),
             Animated.timing(progressWidth, { toValue: 1, duration: 1200, useNativeDriver: false }),
-            Animated.timing(footerOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+            Animated.parallel([
+                Animated.timing(footerOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+                Animated.timing(taglineOpacity, { toValue: 1, duration: 700, useNativeDriver: true }),
+                Animated.timing(featuresOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+            ]),
         ]).start();
 
         const timer = setTimeout(async () => {
             await SplashScreen.hideAsync();
             onFinish();
-        }, 3000);
+        }, 3800);
 
         return () => clearTimeout(timer);
     }, [onFinish]);
@@ -43,7 +49,7 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.topHeader}>
                 <Text style={[styles.redefiningText, { color: colors.textPrimary }]}>
-                    REDEFINING EXCELLENCE
+                    MEJORA TU EXPERIENCIA
                 </Text>
                 <View style={[styles.loaderContainer, { backgroundColor: colors.accentDim }]}>
                     <Animated.View
@@ -53,6 +59,14 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
                         ]}
                     />
                 </View>
+                <Animated.Text
+                    style={[
+                        styles.featuresText,
+                        { color: colors.accent, opacity: featuresOpacity },
+                    ]}
+                >
+                    Reservas · Notificaciones · Satisfacción
+                </Animated.Text>
             </View>
 
             <View style={styles.centerContent}>
@@ -91,12 +105,27 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
                     >
                         BARBER STUDIO
                     </Animated.Text>
+                    <Animated.Text
+                        style={[
+                            styles.taglineText,
+                            { color: colors.textSecondary, opacity: taglineOpacity },
+                        ]}
+                    >
+                        Tu satisfacción, nuestro compromiso
+                    </Animated.Text>
                 </View>
             </View>
 
             <Animated.View style={[styles.footer, { opacity: footerOpacity }]}>
-                <Text style={[styles.footerText, { color: colors.textSecondary }]}>EST. 2024</Text>
-                <Text style={[styles.footerText, { color: colors.textSecondary }]}>PREMIUM GROOMING</Text>
+                <View style={styles.footerLeft}>
+                    <Text style={[styles.footerLabel, { color: colors.textSecondary }]}>EST. 2024</Text>
+                    <Text style={[styles.footerValue, { color: colors.accent }]}>ADMINISTRACIÓN</Text>
+                </View>
+                <View style={styles.footerDivider} />
+                <View style={styles.footerRight}>
+                    <Text style={[styles.footerLabel, { color: colors.textSecondary }]}>GESTIÓN DE</Text>
+                    <Text style={[styles.footerValue, { color: colors.accent }]}>TURNOS</Text>
+                </View>
             </Animated.View>
         </View>
     );
@@ -128,5 +157,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
-    footerText: { fontSize: 10, letterSpacing: 2 },
+    footerLeft: { alignItems: 'flex-start' },
+    footerRight: { alignItems: 'flex-end' },
+    footerDivider: { width: 1, height: 20, backgroundColor: 'rgba(201,168,76,0.3)' },
+    footerLabel: { fontSize: 8, letterSpacing: 2, fontWeight: '300' },
+    footerValue: { fontSize: 9, letterSpacing: 2, fontWeight: '600', marginTop: 2 },
+    taglineText: { fontSize: 11, letterSpacing: 1.5, fontWeight: '300', marginTop: 12, fontStyle: 'italic' },
+    featuresText: { fontSize: 9, letterSpacing: 2, fontWeight: '400', marginTop: 6 },
 });

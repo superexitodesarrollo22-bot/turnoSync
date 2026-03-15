@@ -5,7 +5,6 @@ import * as Linking from 'expo-linking';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../config/supabase';
 import { registerClientPushToken } from '../utils/notifications';
-import { clearAppointmentsCache } from '../hooks/useMyAppointments';
 
 interface AuthContextType {
     session: Session | null;
@@ -34,24 +33,16 @@ async function upsertAndFetchProfile(session: Session): Promise<any | null> {
         || '';
     const email = session.user.email ?? '';
 
-    // Si el cache es del mismo usuario, devolver cache
     if (profileCache?.uid === uid) {
         return profileCache.data;
     }
 
     try {
-        // Upsert en la tabla users
         await supabase.from('users').upsert(
-            {
-                supabase_auth_uid: uid,
-                email,
-                full_name: fullName,
-                avatar_url: avatarUrl,
-            },
+            { supabase_auth_uid: uid, email, full_name: fullName, avatar_url: avatarUrl },
             { onConflict: 'supabase_auth_uid' }
         );
 
-        // Leer el perfil completo (incluye el id interno)
         const { data, error } = await supabase
             .from('users')
             .select('*')
@@ -59,8 +50,6 @@ async function upsertAndFetchProfile(session: Session): Promise<any | null> {
             .single();
 
         if (error || !data) {
-            console.error('[AuthContext] Error leyendo perfil:', error?.message);
-            // Devolver perfil minimo desde metadata si la DB falla
             return { supabase_auth_uid: uid, email, full_name: fullName, avatar_url: avatarUrl };
         }
 
@@ -82,18 +71,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
-    const initDone = useRef(false);
+    // Usar ref para acceder al uid actual sin closure stale
+    const currentUidRef = useRef<string | null>(null);
 
     useEffect(() => {
-        // Inicializacion: leer sesion existente
+        let mounted = true;
+
         const init = async () => {
             try {
                 const { data: { session: existingSession } } = await supabase.auth.getSession();
 
+                if (!mounted) return;
+
                 if (existingSession) {
+                    currentUidRef.current = existingSession.user.id;
                     setSession(existingSession);
                     const p = await upsertAndFetchProfile(existingSession);
-                    if (p) {
+                    if (mounted && p) {
                         setProfile(p);
                         registerClientPushToken(p.id).catch(() => {});
                     }
@@ -101,79 +95,85 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             } catch (e) {
                 console.error('[AuthContext] Error en init:', e);
             } finally {
-                setLoading(false);
-                initDone.current = true;
+                if (mounted) setLoading(false);
             }
         };
 
         init();
 
-        // Escuchar cambios de autenticacion
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, newSession) => {
-                console.log('[AuthContext] Auth event:', event);
+                if (!mounted) return;
+                console.log('[AuthContext] Auth event:', event, newSession?.user?.email ?? 'no session');
 
                 if (event === 'SIGNED_OUT') {
+                    currentUidRef.current = null;
                     clearProfileCache();
                     setSession(null);
                     setProfile(null);
-                    // No tocar loading aqui
+                    setLoading(false);
                     return;
                 }
 
-                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                if (event === 'SIGNED_IN') {
                     if (!newSession) return;
 
-                    // Si es el mismo usuario que ya esta logueado, solo actualizar sesion
-                    if (session?.user?.id === newSession.user.id && profile) {
+                    const newUid = newSession.user.id;
+
+                    // Mismo usuario ya logueado: solo refrescar sesion
+                    if (currentUidRef.current === newUid && profileCache?.uid === newUid) {
                         setSession(newSession);
                         return;
                     }
 
-                    // Nuevo usuario: limpiar estado anterior primero
-                    if (session?.user?.id !== newSession.user.id) {
-                        clearProfileCache();
-                        setProfile(null);
-                    }
-
+                    // Usuario diferente o primera vez
+                    currentUidRef.current = newUid;
+                    clearProfileCache();
+                    setProfile(null);
                     setSession(newSession);
-
-                    // Mostrar loading mientras carga el nuevo perfil
                     setLoading(true);
+
                     try {
                         const p = await upsertAndFetchProfile(newSession);
-                        if (p) {
+                        if (mounted && p) {
                             setProfile(p);
                             registerClientPushToken(p.id).catch(() => {});
                         }
                     } catch (e) {
-                        console.error('[AuthContext] Error cargando perfil nuevo usuario:', e);
+                        console.error('[AuthContext] Error cargando perfil:', e);
                     } finally {
-                        setLoading(false);
+                        if (mounted) setLoading(false);
                     }
                     return;
                 }
 
-                // Otros eventos (PASSWORD_RECOVERY, etc.)
-                if (newSession) {
+                if (event === 'TOKEN_REFRESHED' && newSession) {
                     setSession(newSession);
+                    return;
                 }
             }
         );
 
-        return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     const signOut = async () => {
         try {
+            // Limpiar estado inmediatamente para que la UI reaccione
+            currentUidRef.current = null;
             clearProfileCache();
             setProfile(null);
             setSession(null);
-            clearAppointmentsCache();
+            setLoading(false); // CRITICO: asegurar que loading quede en false
+            // Luego limpiar en Supabase
             await supabase.auth.signOut({ scope: 'local' });
         } catch (e) {
             console.error('[Auth] Error en signOut:', e);
+            // Aunque falle, el estado local ya esta limpio
+            setLoading(false);
         }
     };
 
@@ -195,13 +195,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             console.log('[OAuth] 📱 MÓVIL - usando WebBrowser + deep linking');
-
             const redirectUrl = __DEV__
                 ? Linking.createURL('/--/auth/callback')
                 : 'turnosync://auth/callback';
 
             console.log('[OAuth] Redirect URL:', redirectUrl);
-            console.log('[OAuth] __DEV__:', __DEV__);
 
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -212,24 +210,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 },
             });
 
-            if (error) {
-                console.error('[OAuth] Error obteniendo URL:', error.message);
-                return { error: error.message };
-            }
-
-            if (!data?.url) {
-                return { error: 'No se obtuvo URL de autenticación' };
-            }
+            if (error) return { error: error.message };
+            if (!data?.url) return { error: 'No se obtuvo URL de autenticación' };
 
             console.log('[OAuth] ✅ URL recibida - abriendo WebBrowser');
             const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
 
             if (result.type === 'success') {
                 console.log('[OAuth] Resultado del browser: success');
-                const url = result.url;
-                const fragment = url.split('#')[1] || '';
+                const fragment = result.url.split('#')[1] || '';
                 const params = new URLSearchParams(fragment);
-
                 const accessToken = params.get('access_token');
                 const refreshToken = params.get('refresh_token');
 
@@ -242,16 +232,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (sessionError) return { error: sessionError.message };
                     return { error: null };
                 }
-
-                console.error('[OAuth] ❌ Tokens NO encontrados en:', url);
                 return { error: 'Tokens no encontrados en la respuesta' };
             }
 
-            if (result.type === 'cancel') {
-                return { error: 'Cancelado por el usuario' };
-            }
-
+            if (result.type === 'cancel') return { error: 'Cancelado por el usuario' };
             return { error: 'Error inesperado' };
+
         } catch (err: any) {
             console.error('[signInWithGoogle] Exception:', err.message);
             return { error: err.message || 'Error inesperado en Google Sign In' };
