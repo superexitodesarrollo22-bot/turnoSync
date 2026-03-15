@@ -33,7 +33,8 @@ function RootNavigator() {
   const { session, loading } = useAuth();
   const [splashDone, setSplashDone] = React.useState(false);
 
-  // Si carga, mostrar spinner con fondo de la app (no negro)
+  // loading=true SOLO durante arranque inicial
+  // Jamas vuelve a true despues de eso
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -42,12 +43,11 @@ function RootNavigator() {
     );
   }
 
-  // Sin sesion y sin haber visto el splash: mostrar splash
+  // Sin sesion y sin splash: mostrar animacion de bienvenida
   if (!session && !splashDone) {
     return <SplashAnimatedScreen onFinish={() => setSplashDone(true)} />;
   }
 
-  // Navegar segun sesion
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {session ? (

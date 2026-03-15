@@ -88,7 +88,7 @@ export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => voi
                                 { color: colors.textPrimary, opacity: titleOpacity },
                             ]}
                         >
-                            VANTAGE
+                            TurnoSync
                         </Animated.Text>
                         <Animated.View
                             style={[
