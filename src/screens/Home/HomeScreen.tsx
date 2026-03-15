@@ -37,8 +37,10 @@ export default function HomeScreen({ navigation }: any) {
 
     useFocusEffect(
         useCallback(() => {
+            // Recargar barberías cuando la pantalla recibe foco
+            // Esto cubre el caso de cambio de usuario
             refetch();
-        }, [refetch])
+        }, [])
     );
 
     if (userLoading) {
