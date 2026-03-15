@@ -31,36 +31,23 @@ const linking = {
 
 function RootNavigator() {
   const { session, loading } = useAuth();
-  // splashDone: solo controla si se mostro la animacion inicial
-  // Se resetea cuando session cambia a null (cierre de sesion)
   const [splashDone, setSplashDone] = React.useState(false);
-  const prevSessionRef = React.useRef(session);
 
-  // Cuando la sesion pasa de algo a null (cierre de sesion),
-  // resetear splashDone para que no quede en limbo
-  React.useEffect(() => {
-    if (prevSessionRef.current !== null && session === null && !loading) {
-      // El usuario cerro sesion -> no mostrar splash, ir directo a Auth
-      setSplashDone(true);
-    }
-    prevSessionRef.current = session;
-  }, [session, loading]);
-
-  // Mientras AuthContext inicializa, mostrar spinner
+  // Si carga, mostrar spinner con fondo de la app (no negro)
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#C9A84C" />
       </View>
     );
   }
 
-  // Primera apertura de la app sin sesion -> mostrar splash
+  // Sin sesion y sin haber visto el splash: mostrar splash
   if (!session && !splashDone) {
     return <SplashAnimatedScreen onFinish={() => setSplashDone(true)} />;
   }
 
-  // Con o sin sesion, renderizar el navigator correcto
+  // Navegar segun sesion
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {session ? (
@@ -92,10 +79,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0D0D1A',
+    backgroundColor: '#F5F0E8',
   },
 });
