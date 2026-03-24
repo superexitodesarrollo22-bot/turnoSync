@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, SafeAreaView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useBusinessDetail } from '../../hooks/useBusinessDetail';
@@ -26,11 +26,28 @@ export default function BusinessDetailScreen({ route, navigation }: any) {
     );
 
     const handleBooking = () => {
+        if (!business) return;
         navigation.navigate('BookingSelectService', {
             businessId: business.id,
             businessName: business.name
         });
     };
+
+    if (!loading && !business) return (
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+            <Feather name="alert-circle" size={48} color={colors.error} />
+            <Text style={{ color: colors.textPrimary, marginTop: 16, fontSize: 18, fontWeight: '700' }}>Error al cargar el negocio</Text>
+            <Text style={{ color: colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 40 }}>
+                Asegúrate de haber ejecutado el script SQL de corrección en Supabase para resolver la recursión de RLS.
+            </Text>
+            <TouchableOpacity 
+                style={{ marginTop: 24, padding: 12, backgroundColor: colors.accent, borderRadius: 12 }}
+                onPress={() => navigation.goBack()}
+            >
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Volver atrás</Text>
+            </TouchableOpacity>
+        </SafeAreaView>
+    );
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
