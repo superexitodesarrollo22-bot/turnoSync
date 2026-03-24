@@ -16,24 +16,24 @@ export const SlotButton = ({ label, onSelect, isSelected }: SlotButtonProps) => 
     const { colors, isDark } = useTheme();
 
     return (
-        <AnimatedPressable onPress={onSelect} scaleValue={0.94}>
-            <View
-                style={[
-                    styles.button,
-                    {
-                        backgroundColor: isSelected ? colors.accent : colors.surface,
-                        borderColor: isSelected ? colors.accent : colors.border
-                    }
-                ]}
-            >
-                <Text style={[
-                    styles.label,
-                    { color: isSelected ? (isDark ? '#0D0D1A' : '#FFFFFF') : colors.textPrimary }
-                ]}>
-                    {label}
-                </Text>
-            </View>
-        </AnimatedPressable>
+        <TouchableOpacity 
+            onPress={onSelect} 
+            activeOpacity={0.7}
+            style={[
+                styles.button,
+                {
+                    backgroundColor: isSelected ? colors.accent : colors.surface,
+                    borderColor: isSelected ? colors.accent : colors.border
+                }
+            ]}
+        >
+            <Text style={[
+                styles.label,
+                { color: isSelected ? (isDark ? '#0D0D1A' : '#FFFFFF') : colors.textPrimary }
+            ]}>
+                {label}
+            </Text>
+        </TouchableOpacity>
     );
 };
 

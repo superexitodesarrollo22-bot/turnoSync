@@ -86,10 +86,11 @@ export default function BookingSelectSlotScreen({ navigation, route }: any) {
                 sections={slots.map(s => ({
                     title: s.staffName,
                     staffId: s.staffId,
-                    data: [s.slots] // Secciona por barbero, pero los slots se muestran en grilla
+                    data: [s.slots]
                 }))}
                 keyExtractor={(item, index) => index.toString()}
                 stickySectionHeadersEnabled={true}
+                showsVerticalScrollIndicator={false}
                 renderSectionHeader={({ section: { title } }) => (
                     <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
                         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Barbero: {title}</Text>
@@ -106,7 +107,7 @@ export default function BookingSelectSlotScreen({ navigation, route }: any) {
                         ))}
                     </View>
                 )}
-                contentContainerStyle={styles.list}
+                contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
             />
         </SafeAreaView>
     );
@@ -162,6 +163,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(0,0,0,0.05)',
+        zIndex: 10,
     },
     sectionTitle: {
         fontSize: 12,
@@ -170,12 +172,12 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
     },
     slotGrid: {
-        paddingHorizontal: 10,
+        paddingHorizontal: 16,
         paddingVertical: 15,
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'flex-start',
-        gap: 12,
+        gap: 8,
     },
     emptyContent: {
         flex: 1,
