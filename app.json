@@ -73,7 +73,7 @@
             "image": "./assets/splash.png"
           },
           "light": {
-            "backgroundColor": "#F4F4F8",
+            "backgroundColor": "#F5F5F0",
             "image": "./assets/splash-light.png"
           }
         }
