@@ -1,167 +1,237 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Animated } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Animated,
+    Dimensions,
+    StatusBar,
+    Platform
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppLogo } from '../components/ui/AppLogo';
-import { useTheme } from '../hooks/useTheme';
 
-const { width } = Dimensions.get('window');
+interface Props {
+    onFinish: () => void;
+}
 
-export default function SplashAnimatedScreen({ onFinish }: { onFinish: () => void }) {
-    const { colors } = useTheme();
-
-    const lineScale = useRef(new Animated.Value(0)).current;
-    const progressWidth = useRef(new Animated.Value(0)).current;
+export default function SplashAnimatedScreen({ onFinish }: Props) {
+    // ── Animated values ────────────────────────────────────────────────────────
     const logoOpacity = useRef(new Animated.Value(0)).current;
+    const logoScale = useRef(new Animated.Value(0.6)).current;
     const titleOpacity = useRef(new Animated.Value(0)).current;
-    const footerOpacity = useRef(new Animated.Value(0)).current;
-    const taglineOpacity = useRef(new Animated.Value(0)).current;
-    const featuresOpacity = useRef(new Animated.Value(0)).current;
+    const titleTranslateY = useRef(new Animated.Value(20)).current;
+    const adminTaglineOpacity = useRef(new Animated.Value(0)).current;
+    const progressAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        Animated.sequence([
-            Animated.timing(logoOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+        // Enforce preventing auto hide (sanity check)
+        SplashScreen.preventAutoHideAsync().catch(() => {});
+
+        // Sequential animation logic
+        Animated.parallel([
+            // a) Logo makes fadeIn + scaleIn
+            Animated.spring(logoScale, {
+                toValue: 1,
+                friction: 6,
+                tension: 40,
+                useNativeDriver: true,
+            }),
+            Animated.timing(logoOpacity, {
+                toValue: 1,
+                duration: 600,
+                useNativeDriver: true,
+            }),
+
+            // b) "TurnoSync" slides and fades in after 200ms
             Animated.parallel([
-                Animated.timing(titleOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
-                Animated.timing(lineScale, { toValue: 1, duration: 800, useNativeDriver: true }),
+                Animated.timing(titleTranslateY, {
+                    toValue: 0,
+                    duration: 500,
+                    delay: 200,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(titleOpacity, {
+                    toValue: 1,
+                    duration: 500,
+                    delay: 200,
+                    useNativeDriver: true,
+                }),
             ]),
-            Animated.timing(progressWidth, { toValue: 1, duration: 1200, useNativeDriver: false }),
-            Animated.parallel([
-                Animated.timing(footerOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
-                Animated.timing(taglineOpacity, { toValue: 1, duration: 700, useNativeDriver: true }),
-                Animated.timing(featuresOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
-            ]),
+
+            // c) "ADMIN" and Tagline fadeIn after 400ms
+            Animated.timing(adminTaglineOpacity, {
+                toValue: 1,
+                duration: 400,
+                delay: 400,
+                useNativeDriver: true,
+            }),
+
+            // d) Progress bar begins filling after 600ms
+            Animated.timing(progressAnim, {
+                toValue: 1,
+                duration: 1400,
+                delay: 600,
+                useNativeDriver: false, // width doesn't support native driver
+            }),
         ]).start();
 
+        // Security timeout and onFinish
         const timer = setTimeout(async () => {
-            await SplashScreen.hideAsync();
+            try {
+                await SplashScreen.hideAsync();
+            } catch (e) {}
             onFinish();
-        }, 3800);
+        }, 2600); // 2600ms total logic time
 
         return () => clearTimeout(timer);
     }, [onFinish]);
 
-    const animatedProgressWidth = progressWidth.interpolate({
+    const progressWidth = progressAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: ['0%', '100%'],
+        outputRange: [0, 180],
     });
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.topHeader}>
-                <Text style={[styles.redefiningText, { color: colors.textPrimary }]}>
-                    MEJORA TU EXPERIENCIA
-                </Text>
-                <View style={[styles.loaderContainer, { backgroundColor: colors.accentDim }]}>
-                    <Animated.View
-                        style={[
-                            styles.loaderBar,
-                            { backgroundColor: colors.accent, width: animatedProgressWidth },
-                        ]}
-                    />
-                </View>
-                <Animated.Text
+        <View style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            
+            {/* Background */}
+            <LinearGradient
+                colors={['#FFFFFF', '#F5F5F0']}
+                style={StyleSheet.absoluteFill}
+            />
+
+            <View style={styles.content}>
+                {/* 1. LOGO HERO */}
+                <Animated.View
                     style={[
-                        styles.featuresText,
-                        { color: colors.accent, opacity: featuresOpacity },
+                        styles.logoHeroContainer,
+                        {
+                            opacity: logoOpacity,
+                            transform: [{ scale: logoScale }],
+                        },
                     ]}
                 >
-                    Reservas · Notificaciones · Satisfacción
+                    <View style={styles.logoHalo}>
+                        <AppLogo 
+                            size={130} 
+                            iconSize={58} 
+                            style={styles.logoInner}
+                        />
+                    </View>
+                </Animated.View>
+
+                {/* 2. NOMBRE DE LA APP */}
+                <Animated.View
+                    style={[
+                        styles.titleContainer,
+                        {
+                            opacity: titleOpacity,
+                            transform: [{ translateY: titleTranslateY }],
+                        },
+                    ]}
+                >
+                    <Text style={styles.appName}>TurnoSync</Text>
+                    <Animated.Text style={[styles.adminLabel, { opacity: adminTaglineOpacity }]}>
+                        ADMIN
+                    </Animated.Text>
+                </Animated.View>
+
+                {/* 3. TAGLINE */}
+                <Animated.Text style={[styles.tagline, { opacity: adminTaglineOpacity }]}>
+                    Gestión profesional de turnos
                 </Animated.Text>
             </View>
 
-            <View style={styles.centerContent}>
-                <Animated.View style={[styles.logoContainer, { opacity: logoOpacity }]}>
-                    <AppLogo size={70} />
-                </Animated.View>
-
-                <View style={styles.brandContainer}>
-                    <View style={styles.titleRow}>
-                        <Animated.View
-                            style={[
-                                styles.decorativeLine,
-                                { backgroundColor: colors.accent, transform: [{ scaleX: lineScale }] },
-                            ]}
-                        />
-                        <Animated.Text
-                            style={[
-                                styles.vantageText,
-                                { color: colors.textPrimary, opacity: titleOpacity },
-                            ]}
-                        >
-                            TurnoSync
-                        </Animated.Text>
-                        <Animated.View
-                            style={[
-                                styles.decorativeLine,
-                                { backgroundColor: colors.accent, transform: [{ scaleX: lineScale }] },
-                            ]}
-                        />
-                    </View>
-                    <Animated.Text
-                        style={[
-                            styles.barberStudioText,
-                            { color: colors.accent, opacity: titleOpacity },
-                        ]}
-                    >
-                        BARBER STUDIO
-                    </Animated.Text>
-                    <Animated.Text
-                        style={[
-                            styles.taglineText,
-                            { color: colors.textSecondary, opacity: taglineOpacity },
-                        ]}
-                    >
-                        Tu satisfacción, nuestro compromiso
-                    </Animated.Text>
+            {/* 4. BARRA DE PROGRESO */}
+            <View style={styles.progressFooter}>
+                <View style={styles.progressTrack}>
+                    <Animated.View style={[styles.progressFill, { width: progressWidth }]} />
                 </View>
             </View>
-
-            <Animated.View style={[styles.footer, { opacity: footerOpacity }]}>
-                <View style={styles.footerLeft}>
-                    <Text style={[styles.footerLabel, { color: colors.textSecondary }]}>EST. 2024</Text>
-                    <Text style={[styles.footerValue, { color: colors.accent }]}>ADMINISTRACIÓN</Text>
-                </View>
-                <View style={styles.footerDivider} />
-                <View style={styles.footerRight}>
-                    <Text style={[styles.footerLabel, { color: colors.textSecondary }]}>GESTIÓN DE</Text>
-                    <Text style={[styles.footerValue, { color: colors.accent }]}>TURNOS</Text>
-                </View>
-            </Animated.View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    topHeader: { position: 'absolute', top: '25%', alignItems: 'center' },
-    redefiningText: { fontSize: 10, letterSpacing: 4, fontWeight: '300', marginBottom: 8 },
-    loaderContainer: { width: 120, height: 1 },
-    loaderBar: { height: '100%' },
-    centerContent: { alignItems: 'center', justifyContent: 'center' },
-    logoContainer: {
-        width: 180,
-        height: 180,
-        marginBottom: 30,
+    container: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+    },
+    content: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        paddingBottom: 40,
     },
-    brandContainer: { alignItems: 'center' },
-    titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-    vantageText: { fontSize: 48, fontWeight: 'bold', letterSpacing: 8, marginHorizontal: 20 },
-    decorativeLine: { width: 40, height: 1 },
-    barberStudioText: { fontSize: 14, letterSpacing: 10, fontWeight: '600', marginTop: 5 },
-    footer: {
+    logoHeroContainer: {
+        marginBottom: 36,
+    },
+    logoHalo: {
+        width: 180,
+        height: 180,
+        borderRadius: 90,
+        backgroundColor: 'rgba(233,69,96,0.06)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(233,69,96,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...Platform.select({
+            ios: {
+                shadowColor: '#E94560',
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.25,
+                shadowRadius: 20,
+            },
+            android: {
+                elevation: 10,
+            },
+        }),
+    },
+    logoInner: {
+        borderColor: '#E94560',
+        backgroundColor: 'rgba(233,69,96,0.06)',
+    },
+    titleContainer: {
+        alignItems: 'center',
+    },
+    appName: {
+        fontSize: 38,
+        fontWeight: '800',
+        color: '#1A1A1A',
+        letterSpacing: 1,
+    },
+    adminLabel: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#E94560',
+        letterSpacing: 6,
+        textTransform: 'uppercase',
+        marginTop: 4,
+    },
+    tagline: {
+        fontSize: 14,
+        color: '#5A5A5A',
+        fontStyle: 'italic',
+        marginTop: 12,
+    },
+    progressFooter: {
         position: 'absolute',
-        bottom: 50,
-        width: '80%',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        bottom: 80,
+        alignSelf: 'center',
     },
-    footerLeft: { alignItems: 'flex-start' },
-    footerRight: { alignItems: 'flex-end' },
-    footerDivider: { width: 1, height: 20, backgroundColor: 'rgba(201,168,76,0.3)' },
-    footerLabel: { fontSize: 8, letterSpacing: 2, fontWeight: '300' },
-    footerValue: { fontSize: 9, letterSpacing: 2, fontWeight: '600', marginTop: 2 },
-    taglineText: { fontSize: 11, letterSpacing: 1.5, fontWeight: '300', marginTop: 12, fontStyle: 'italic' },
-    featuresText: { fontSize: 9, letterSpacing: 2, fontWeight: '400', marginTop: 6 },
+    progressTrack: {
+        width: 180,
+        height: 3,
+        backgroundColor: '#EDEDEA',
+        borderRadius: 2,
+        overflow: 'hidden',
+    },
+    progressFill: {
+        height: '100%',
+        backgroundColor: '#E94560',
+    },
 });
+
